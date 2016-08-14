@@ -27,7 +27,7 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 
 Subjects <- 1
 Plot_subj <- FALSE
-Analyses_nos <- c(17:24) # NB : MUST BE > 10
+Analyses_nos <- c(18, 23:27) # NB : MUST BE > 10
 Do_stats = TRUE
 Do_plots = TRUE
 
@@ -36,8 +36,8 @@ Do_plots = TRUE
 <!-- Load data & clean -->
 
 ```{r echo = FALSE, cache=F}
-setwd("U:/Peters_data")
-# setwd("~/Dropbox/Peters_data")
+# setwd("U:/Peters_data")
+setwd("~/Dropbox/Peters_data")
 
 #---------------------------------------
 # Load in data & clean
