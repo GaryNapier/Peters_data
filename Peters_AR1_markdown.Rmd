@@ -20,18 +20,18 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 
 ```
 
-<!-- arguments -->
+<!-- arguments --> 
 
 ```{r echo = FALSE, cache=F}
 # Peters_function <- function(Subjects, Analyses_nos, Do_stats = FALSE, Do_plots = FALSE){
 
 Subjects <- c(1)
 Plot_subj <- FALSE
-<<<<<<< HEAD
+
 Analyses_nos <- c(25:29, 31:33) # NB : MUST BE > 10
-=======
+
 Analyses_nos <- c(27, 30) # NB : MUST BE > 10
->>>>>>> 0a2a817e8ca50adc4010b79d230603d47e91713f
+
 Do_stats = TRUE
 Do_plots = TRUE
 
@@ -82,16 +82,16 @@ Table_options <- list(align=c("c","|"), align.header =c("c","|"), col.columns = 
 
 # Get model names/numbers
 Model_names <- vector()
-<<<<<<< HEAD
+
 for (i in seq_along(Analyses_nos)){
   Model_names[i] <- sprintf("A%g", Analyses_nos[i])  
 }
 # remove NA
-=======
+
 for (i in Analyses_nos){
   Model_names[i] <- sprintf("A%g", i)  
 }
->>>>>>> 0a2a817e8ca50adc4010b79d230603d47e91713f
+
 Model_names <- Model_names[!is.na(Model_names)]
 
 # Save names of priors
