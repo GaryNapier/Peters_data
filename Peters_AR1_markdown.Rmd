@@ -27,7 +27,7 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 
 Subjects <- 1
 Plot_subj <- FALSE
-Analyses_nos <- c(18, 23:27) # NB : MUST BE > 10
+Analyses_nos <- c(25:29, 31:33) # NB : MUST BE > 10
 Do_stats = TRUE
 Do_plots = TRUE
 
@@ -75,9 +75,11 @@ Table_options <- list(align=c("c","|"), align.header =c("c","|"), col.columns = 
 
 # Get model names/numbers
 Model_names <- vector()
-for (i in seq(Analyses_nos)){
+for (i in seq_along(Analyses_nos)){
   Model_names[i] <- sprintf("A%g", Analyses_nos[i])  
 }
+# remove NA
+Model_names <- Model_names[!is.na(Model_names)]
 
 # Save names of priors
 Priors <- c("NuPrimeMu", "NuPrimeSa", "KappaMu", "KappaSa", "OmegaMu", 
