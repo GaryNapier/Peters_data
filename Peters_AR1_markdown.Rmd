@@ -1,7 +1,7 @@
 ---
 title: "AR1 analyses of Peters data"
 author: "Gary Napier"
-date:  "`r format(Sys.time(), '%d %B, %Y')`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: html_document
 ---
 
@@ -25,9 +25,13 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 ```{r echo = FALSE, cache=F}
 # Peters_function <- function(Subjects, Analyses_nos, Do_stats = FALSE, Do_plots = FALSE){
 
-Subjects <- 1
+Subjects <- c(1)
 Plot_subj <- FALSE
+<<<<<<< HEAD
 Analyses_nos <- c(25:29, 31:33) # NB : MUST BE > 10
+=======
+Analyses_nos <- c(27, 30) # NB : MUST BE > 10
+>>>>>>> 0a2a817e8ca50adc4010b79d230603d47e91713f
 Do_stats = TRUE
 Do_plots = TRUE
 
@@ -36,8 +40,11 @@ Do_plots = TRUE
 <!-- Load data & clean -->
 
 ```{r echo = FALSE, cache=F}
-# setwd("U:/Peters_data")
+tryCatch({
+setwd("U:/Peters_data")
+}, error=function(e){
 setwd("~/Dropbox/Peters_data")
+})
 
 #---------------------------------------
 # Load in data & clean
@@ -75,10 +82,16 @@ Table_options <- list(align=c("c","|"), align.header =c("c","|"), col.columns = 
 
 # Get model names/numbers
 Model_names <- vector()
+<<<<<<< HEAD
 for (i in seq_along(Analyses_nos)){
   Model_names[i] <- sprintf("A%g", Analyses_nos[i])  
 }
 # remove NA
+=======
+for (i in Analyses_nos){
+  Model_names[i] <- sprintf("A%g", i)  
+}
+>>>>>>> 0a2a817e8ca50adc4010b79d230603d47e91713f
 Model_names <- Model_names[!is.na(Model_names)]
 
 # Save names of priors
@@ -126,7 +139,7 @@ rownames(Priors_df_AR1) <- Model_names
 ```
 
 ### **Parameter priors**
-`r '### AR1 model analyses:'`
+#### AR1 model analyses:
 `r  do.call("htmlTable", c(list(Priors_df_AR1), Table_options))`
 **-------------------------------------------------------------------------------------------**
 
@@ -266,8 +279,11 @@ for (j in seq(Predictions))
   for (i in seq(Predictions[[j]])){
     Predictions[[j]][[i]] <- append(Predictions[[j]][[i]], Mu2_0[[j]][i], 0)
   }
+```
 
-  
+
+<!--  CREATE parametric models - ANOVA -->
+```{r echo=FALSE, cache=F}
 #------------------------------------------------
 # CREATE parametric models - ANOVA
 #------------------------------------------------
@@ -345,8 +361,6 @@ for (i in 1: length(Post_hoc_phi2)){
 for (i in 1: length(Post_hoc_phi2)){
   Post_hoc_phi3[[i]]$Comparison <- factor(row.names(Post_hoc_phi3[[i]]))
 }
-
-
 
 Labels <- factor(c(rep("Omega2", N_groups), rep("Omega3", N_groups),  rep("Nu", N_groups), rep("M2", N_groups), rep("M3", N_groups), rep("Phi2", N_groups), rep("Phi3", N_groups)), levels = c("Omega2", "Omega3", "Nu", "M2", "M3", "Phi2", "Phi3")) 
 
@@ -466,6 +480,7 @@ for (i in 1:length(Analyses_nos)){
           c(mean(Om2_vector[[i]]$Om2_vector[Psych_ctrl]), sd(Om2_vector[[i]]$Om2_vector[Psych_ctrl])) 
           ), digits = 3  ) ) # rbind, data.frame, signif
     }),  setNames, Col_names))
+  
     # OMEGA3
     Om3_mean_sd <- do.call("rbind", lapply( lapply_mod(Aov_mod_om3, function(i){
      data.frame(signif(rbind(
@@ -816,13 +831,15 @@ x_axes <- lapply(seq_along(x_axes),
 # ------------------------------------------------------
 # Plot selected subject(s) response trajectory
 # ------------------------------------------------------
+# Set the default theme
+theme_set(theme_grey())
 
 if (Plot_subj == TRUE){
         
 for (i in seq_along(Analyses_nos)){
   for (j in seq_along(Subjects)){
       
-     # tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+    # tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
       print(ggplot()+
               geom_line(data=Predictions_selected[[i]][[j]],
                         aes(x=x_axes[[i]]$Index, y=Predictions, colour="Predictions"), 
@@ -852,18 +869,21 @@ for (i in seq_along(Analyses_nos)){
               ggtitle(paste(sprintf("S %g, A %g; Fit (BOOC) = %g (smaller is better)\n", 
                                     Subjects[j], Analyses_nos[i], Fit_BOOC_subject[[i]][j]),
                             sprintf("Posteriors: Om2=%g; Om3=%g, Nu=%g; M2=%g; M3=%g; Phi2=%g; Phi3=%g",
-                                    signif(Om2_vector[[i]][j, 2], digits=3), 
-                                    signif(Om3_vector[[i]][j, 2], digits=3), 
+                                    signif(Om2_vector[[i]][Subjects[j], 2], digits=3), 
+                                    signif(Om3_vector[[i]][Subjects[j], 2], digits=3), 
                                     
-                                    signif(Nu_vector[[i]][j, 2], digits=3),
+                                    signif(Nu_vector[[i]][Subjects[j], 2], digits=3),
                                     
-                                    signif(M2_vector[[i]][j, 2], digits=3), 
-                                    signif(M3_vector[[i]][j, 2], digits=3), 
+                                    signif(M2_vector[[i]][Subjects[j], 2], digits=3), 
+                                    signif(M3_vector[[i]][Subjects[j], 2], digits=3), 
                                     
-                                    signif(Phi2_vector[[i]][j, 2], digits=3),
-                                    signif(Phi3_vector[[i]][j, 2], digits=3)
+                                    signif(Phi2_vector[[i]][Subjects[j], 2], digits=3),
+                                    signif(Phi3_vector[[i]][Subjects[j], 2], digits=3)
                                     ) ) ) +
-              theme(plot.title = element_text(size = 16)) )
+              theme(plot.title = element_text(size = 12)) 
+      
+            )# print()
+    
     } 
   }
         
@@ -876,30 +896,6 @@ for (i in seq_along(Analyses_nos)){
 ```{r  echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
 
 if (Do_plots == TRUE){
-  
-# Scatter plot 
-# for (i in 1:length(Analyses_nos)){
-#   # tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
-#   Om_scatter <- ggplot(Om_vector[[i]], aes(1:length(Group), Om_vector))+
-#     geom_point(aes(colour = Group), size = 2)+
-#     theme(legend.position="none")+
-#     labs(x = "Subject index", y = "Omega posteriors")
-#   Nu_scatter <- ggplot(Nu_vector[[i]], aes(1:length(Group), Nu_vector))+
-#     geom_point(aes(colour = Group), size = 2)+
-#     theme(legend.position="none")+
-#     labs(x = "Subject index", y = "Nu posteriors")
-#   M_scatter <- ggplot(M_vector[[i]], aes(1:length(Group), M_vector))+
-#     geom_point(aes(colour = Group), size = 2)+
-#     theme(legend.position="none")+
-#     labs(x = "Subject index", y = "M posteriors")
-#   Phi_scatter <- ggplot(Phi_vector[[i]], aes(1:length(Group), Phi_vector))+
-#     geom_point(aes(colour = Group), size = 2)+
-#     theme(legend.position="bottom")+
-#     labs(x = "Subject index", y = "Phi posteriors")
-#   grid.arrange(Om_scatter, Nu_scatter, M_scatter, Phi_scatter, ncol=4, nrow=1, 
-#                top = sprintf("Omega, Nu, M and Phi\n posteriors for three groups; A %d", 
-#                              Analyses_nos[i]))
-# }
 
 for (i in seq(Om2_vector)){
   levels(Om2_vector[[i]]$Group) <- gsub(" ", "\n", levels(Om2_vector[[i]]$Group))
@@ -1048,6 +1044,6 @@ for (i in 1:length(Analyses_nos)){
 
 
 
-
+```
 
 
