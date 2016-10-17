@@ -25,12 +25,10 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 ```{r echo = FALSE, cache=F}
 # Peters_function <- function(Subjects, Analyses_nos, Do_stats = FALSE, Do_plots = FALSE){
 
-Subjects <- c(1)
+Subjects <- 1
 Plot_subj <- FALSE
 
 Analyses_nos <- c(25:29, 31:33) # NB : MUST BE > 10
-
-Analyses_nos <- c(27, 30) # NB : MUST BE > 10
 
 Do_stats = TRUE
 Do_plots = TRUE
@@ -82,16 +80,10 @@ Table_options <- list(align=c("c","|"), align.header =c("c","|"), col.columns = 
 
 # Get model names/numbers
 Model_names <- vector()
-
 for (i in seq_along(Analyses_nos)){
   Model_names[i] <- sprintf("A%g", Analyses_nos[i])  
 }
 # remove NA
-
-for (i in Analyses_nos){
-  Model_names[i] <- sprintf("A%g", i)  
-}
-
 Model_names <- Model_names[!is.na(Model_names)]
 
 # Save names of priors
