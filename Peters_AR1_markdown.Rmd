@@ -28,7 +28,7 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 Subjects <- 1
 Plot_subj <- FALSE
 
-Analyses_nos <- c(25:29, 31:33) # NB : MUST BE > 10
+Analyses_nos <- c(31:34) # NB : MUST BE > 10
 
 Do_stats = TRUE
 Do_plots = TRUE
@@ -98,7 +98,8 @@ Priors_names <- c("NuPrimeMu", "NuPrimeSa", "KappaMu", "KappaSa", "Om2Mu",
 options(digits = 4)
 Group_names <- as.character(unique(Group))
 N_groups <- length(Group_names)
-Parameter_names <- c("Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
+# Parameter_names <- c("Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
+Parameter_names <- c("Sa2", "Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
 N_parameters <- length(Parameter_names)
 N_subjects <- length(Analyses[[1]][[1]][[1]][[1]])
 N_analyses <- length(Analyses_nos)
@@ -114,6 +115,12 @@ for (i in seq(Analyses_nos)){
    Priors_df_AR1[[i]] <- Analyses[[1]][[Analyses_nos[i]]][[1]][,,1][c(Priors)]
 }
 
+# Fix error in original Matlab code
+for (i in seq(Priors_df_AR1)){
+Priors_df_AR1[[i]]$Sig2Mu <- ifelse(Priors_df_AR1[[i]]$Sig2Mu == 0, 0.006, Priors_df_AR1[[i]]$Sig2Mu)
+}
+
+
 # AR1 priors - horrible data-cleaning excercise!
 Priors_df_AR1 <- Priors_df_AR1[!sapply(Priors_df_AR1, is.null)]
 Priors_df_AR1 <- lapply(Priors_df_AR1, function(x) x[!sapply(x, is.null)])
@@ -122,7 +129,6 @@ Priors_df_AR1 <- lapply(Priors_df_AR1, function(x) lapply(x, function(x){
 }))
 Priors_df_AR1 <- plyr::ldply(lapply(Priors_df_AR1, data.frame), data.frame)
 rownames(Priors_df_AR1) <- Model_names
-
 
 # # Tests for R markdown evaluation:
 # Priors_df_test <- nrow(Priors_df) > 1
@@ -140,6 +146,7 @@ rownames(Priors_df_AR1) <- Model_names
 ```{r echo=FALSE, cache=F}
 
 # Get posteriors from selected analyses - for overall stats
+Sa2_vector <- vector("list", length(Analyses[[1]]))
 Om2_vector <- vector("list", length(Analyses[[1]]))
 Om3_vector <- vector("list", length(Analyses[[1]]))
 Nu_vector <- vector("list", length(Analyses[[1]]))
@@ -147,8 +154,11 @@ M2_vector  <- vector("list", length(Analyses[[1]]))
 M3_vector  <- vector("list", length(Analyses[[1]]))
 Phi2_vector<- vector("list", length(Analyses[[1]]))
 Phi3_vector<- vector("list", length(Analyses[[1]]))
+
 for (j in seq_along(Analyses_nos)){
   for (i in 1:N_subjects){
+Sa2_vector[[Analyses_nos[j]]][i] <- 
+Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][2][[1]][,2]
 Om2_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][2]
 Om3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][3]
 Nu_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[10]][[1]][1]
@@ -160,6 +170,7 @@ Phi3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][
 }#for (j in Analyses_nos)
  
 # Clear NULL values from lists
+Sa2_vector <- Sa2_vector[vapply(Sa2_vector, Negate(is.null), NA)]
 Om2_vector <- Om2_vector[vapply(Om2_vector, Negate(is.null), NA)]
 Om3_vector <- Om3_vector[vapply(Om3_vector, Negate(is.null), NA)]
 Nu_vector <- Nu_vector[vapply(Nu_vector, Negate(is.null), NA)]
@@ -172,6 +183,7 @@ Phi3_vector<- Phi3_vector[vapply(Phi3_vector, Negate(is.null), NA)]
 Nu_vector <- lapply(Nu_vector, log)
 
 # Make list of data frames for ANOVA analyses
+Sa2_vector <- lapply(Sa2_vector, function(Sa2_vector) cbind.data.frame(Group, Sa2_vector))
 Om2_vector <- lapply(Om2_vector, function(Om2_vector) cbind.data.frame(Group, Om2_vector))
 Om3_vector <- lapply(Om3_vector, function(Om3_vector) cbind.data.frame(Group, Om3_vector))
 Nu_vector <- lapply(Nu_vector, function(Nu_vector) cbind.data.frame(Group, Nu_vector))
@@ -281,6 +293,12 @@ for (j in seq(Predictions))
 #------------------------------------------------
 
 # Create ANOVA models:
+# Sa2 
+Aov_mod_sa2 <- lapply(Sa2_vector, function(x) aov(x$Sa2_vector ~ x$Group))
+# Get post-hoc tests
+Post_hoc_sa2 <- lapply_mod(Aov_mod_sa2, function(i) 
+  data.frame(TukeyHSD(Aov_mod_sa2[[i]])$`x$Group`))
+
 # Om2
 Aov_mod_om2 <- lapply(Om2_vector, function(x) aov(x$Om2_vector ~ x$Group))
 # Get post-hoc tests
@@ -322,6 +340,11 @@ Post_hoc_phi3 <- lapply_mod(Aov_mod_phi3, function(i)
 
 # Prep post-hoc comparisons for plot as data frame
 
+# Sa2
+for (i in 1: length(Post_hoc_sa2)){
+  Post_hoc_sa2[[i]]$Comparison <- factor(row.names(Post_hoc_sa2[[i]]))
+}
+
 # Om2
 for (i in 1: length(Post_hoc_om2)){
   Post_hoc_om2[[i]]$Comparison <- factor(row.names(Post_hoc_om2[[i]]))
@@ -354,14 +377,18 @@ for (i in 1: length(Post_hoc_phi2)){
   Post_hoc_phi3[[i]]$Comparison <- factor(row.names(Post_hoc_phi3[[i]]))
 }
 
-Labels <- factor(c(rep("Omega2", N_groups), rep("Omega3", N_groups),  rep("Nu", N_groups), rep("M2", N_groups), rep("M3", N_groups), rep("Phi2", N_groups), rep("Phi3", N_groups)), levels = c("Omega2", "Omega3", "Nu", "M2", "M3", "Phi2", "Phi3")) 
+# Labels <- factor(c(rep("Omega2", N_groups), rep("Omega3", N_groups),  rep("Nu", N_groups), rep("M2", N_groups), rep("M3", N_groups), rep("Phi2", N_groups), rep("Phi3", N_groups)), levels = c("Omega2", "Omega3", "Nu", "M2", "M3", "Phi2", "Phi3")) 
+Labels <- factor(c(rep("Sa2", N_groups), rep("Omega2", N_groups), rep("Omega3", N_groups),  rep("Nu", N_groups), rep("M2", N_groups), rep("M3", N_groups), rep("Phi2", N_groups), rep("Phi3", N_groups)), levels = c("Sa2", "Omega2", "Omega3", "Nu", "M2", "M3", "Phi2", "Phi3")) 
 
 # Create data frames in a list combining the post-hoc tests on Om & Nu &
 # adding label for each parameter (for plotting)
 Post_hoc_df <- vector("list", length(Analyses_nos)) # Predefine
+# for (i in 1:length(Analyses_nos)){
+#   Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_om2[[i]], Post_hoc_om3[[i]], Post_hoc_nu[[i]], 
+#                                   Post_hoc_M2[[i]], Post_hoc_M3[[i]], Post_hoc_phi2[[i]], Post_hoc_phi3[[i]]), Labels)
+# }
 for (i in 1:length(Analyses_nos)){
-  Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_om2[[i]], Post_hoc_om3[[i]], Post_hoc_nu[[i]], 
-                                  Post_hoc_M2[[i]], Post_hoc_M3[[i]], Post_hoc_phi2[[i]], Post_hoc_phi3[[i]]), Labels)
+Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_om3[[i]], Post_hoc_nu[[i]], Post_hoc_M2[[i]], Post_hoc_M3[[i]], Post_hoc_phi2[[i]], Post_hoc_phi3[[i]]), Labels)
 }
 
 ```
@@ -370,6 +397,9 @@ for (i in 1:length(Analyses_nos)){
 ##### [<0.05 = NOT normal]
 
 ```{r echo = FALSE, cache=F, htmlTable, results = 'asis'}
+
+  #Aov_mod_sa2
+  SW_sa2 <- signif(sapply(Aov_mod_sa2, function(x) Shapiro_NA(residuals(x))), digits = 3 )
 
   # Aov_mod_om2
   SW_omega2 <- signif(sapply(Aov_mod_om2, function(x) Shapiro_NA(residuals(x))), digits = 3 )
@@ -391,7 +421,9 @@ for (i in 1:length(Analyses_nos)){
 
   # kable(data.frame(Model_names, SW_omega, SW_nu, SW_M, SW_phi), padding = 0)
   
-  SW_data <- data.frame(Model_names, SW_omega2, SW_omega3, SW_nu, SW_M2, SW_M3, SW_phi2, SW_phi3)
+  # SW_data <- data.frame(Model_names, SW_omega2, SW_omega3, SW_nu, SW_M2, SW_M3, SW_phi2, SW_phi3)
+  # do.call("htmlTable", c(list(SW_data), Table_options))
+  SW_data <- data.frame(Model_names, SW_sa2, SW_omega2, SW_omega3, SW_nu, SW_M2, SW_M3, SW_phi2, SW_phi3)
   do.call("htmlTable", c(list(SW_data), Table_options))
 
 ```
@@ -401,7 +433,10 @@ for (i in 1:length(Analyses_nos)){
 ##### [<0.05 = VIOLATION of homogeneity of variance]
 
 ```{r echo = FALSE, cache=F, results = 'asis'}
-  
+
+  # Sa2
+  BF_sa2 <- signif(sapply(Sa2_vector, function(x) leveneTest(Sa2_vector ~ Group, data=x,  center=median)$P), digits=3)
+
   # Om2
   BF_omega2 <- signif(sapply(Om2_vector, function(x) leveneTest(Om2_vector ~ Group, data=x,  center=median)$P), digits=3)
   # Om3
@@ -421,6 +456,7 @@ for (i in 1:length(Analyses_nos)){
   BF_phi3 <- signif(sapply(Phi3_vector, function(x) leveneTest(Phi3_vector ~ Group, data=x, center=median)$P), digits = 3)
   
   # Clean:
+  BF_sa2 <- BF_sa2[!is.na(BF_sa2) | is.nan(BF_sa2)]
   BF_omega2 <- BF_omega2[!is.na(BF_omega2) | is.nan(BF_omega2)]
   BF_omega3 <- BF_omega3[!is.na(BF_omega3) | is.nan(BF_omega3)]
   BF_nu <- BF_nu[!is.na(BF_nu) | is.nan(BF_nu)]
@@ -429,7 +465,8 @@ for (i in 1:length(Analyses_nos)){
   BF_phi2 <- BF_phi2[!is.na(BF_phi2) | is.nan(BF_phi2)]
   BF_phi3 <- BF_phi3[!is.na(BF_phi3) | is.nan(BF_phi3)]
   
-  BF_data <- data.frame(Model_names, BF_omega2, BF_omega3, BF_nu, BF_M2, BF_M3, BF_phi2, BF_phi3)
+  # BF_data <- data.frame(Model_names, BF_omega2, BF_omega3, BF_nu, BF_M2, BF_M3, BF_phi2, BF_phi3)
+  BF_data <- data.frame(Model_names, BF_sa2, BF_omega2, BF_omega3, BF_nu, BF_M2, BF_M3, BF_phi2, BF_phi3)
   
   do.call("htmlTable", c(list(BF_data), Table_options))
   
@@ -462,6 +499,16 @@ for (i in 1:length(Analyses_nos)){
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
     
     Col_names <- c("Mean", "SD")
+
+    # SA2
+    # Mean / sd groups
+        Sa2_mean_sd <- do.call("rbind", lapply( lapply_mod(Aov_mod_sa2, function(i){
+     data.frame(signif(rbind(
+          c(mean(Sa2_vector[[i]]$Sa2_vector[Ctrl]), sd(Sa2_vector[[i]]$Sa2_vector[Ctrl])), 
+          c(mean(Sa2_vector[[i]]$Sa2_vector[Pat]), sd(Sa2_vector[[i]]$Sa2_vector[Pat])),  
+          c(mean(Sa2_vector[[i]]$Sa2_vector[Psych_ctrl]), sd(Sa2_vector[[i]]$Sa2_vector[Psych_ctrl])) 
+          ), digits = 3  ) ) # rbind, data.frame, signif
+    }),  setNames, Col_names))
     
     # OMEGA2
     # Mean / sd groups
@@ -530,7 +577,8 @@ for (i in 1:length(Analyses_nos)){
     }), setNames, Col_names))
     
     # Bring all means, SDs together
-    Mean_sd <- cbind(Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
+    # Mean_sd <- cbind(Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
+    Mean_sd <- cbind(Sa2_mean_sd, Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
   
   htmlTable(Mean_sd,
             rnames=rep(Group_names, N_analyses), 
@@ -544,7 +592,11 @@ for (i in 1:length(Analyses_nos)){
 #### ANOVA model summaries table
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
-   
+
+###################################################
+########## GOT TO HERE WITH SA2 ADDITION ##########
+###################################################
+
   # Omega2
   Om2_anova <- lapply_mod(Aov_mod_om2, function(i){summary(Aov_mod_om2[[i]])})
   Om2_anova_df <- do.call("rbind", sapply(Om2_anova, function(x) lapply(x, data.frame)))
