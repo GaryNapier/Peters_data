@@ -597,6 +597,17 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
 ########## GOT TO HERE WITH SA2 ADDITION ##########
 ###################################################
 
+  # Sa2
+  Sa2_anova <- lapply_mod(Aov_mod_sa2, function(i){summary(Aov_mod_sa2[[i]])})
+  Sa2_anova_df <- do.call("rbind", sapply(Sa2_anova, function(x) lapply(x, data.frame)))
+  Df <- unique(Sa2_anova_df$Df)
+  Col_names <- c(sprintf("F(%g,%g)",Df[1], Df[2]), "p")
+  Sa2_anova_df <- dplyr::select(Sa2_anova_df, -(Df:Mean.Sq))
+  Sa2_anova_df <- Sa2_anova_df[-c(seq(2, nrow(Sa2_anova_df), 2)),]
+  colnames(Sa2_anova_df) <- Col_names
+  rownames(Sa2_anova_df) <- Model_names
+  Sa2_anova_df <- signif(Sa2_anova_df, digits = 2)
+
   # Omega2
   Om2_anova <- lapply_mod(Aov_mod_om2, function(i){summary(Aov_mod_om2[[i]])})
   Om2_anova_df <- do.call("rbind", sapply(Om2_anova, function(x) lapply(x, data.frame)))
@@ -661,7 +672,8 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
   rownames(Phi3_anova_df) <- Model_names
   Phi3_anova_df <- signif(Phi3_anova_df, digits = 2)
 
-  Anova_table <- cbind(Om2_anova_df, Om3_anova_df, Nu_anova_df, M2_anova_df, M3_anova_df, Phi2_anova_df, Phi3_anova_df)
+  # Anova_table <- cbind(Om2_anova_df, Om3_anova_df, Nu_anova_df, M2_anova_df, M3_anova_df, Phi2_anova_df, Phi3_anova_df)
+    Anova_table <- cbind(Sa2_anova_df, Om2_anova_df, Om3_anova_df, Nu_anova_df, M2_anova_df, M3_anova_df, Phi2_anova_df, Phi3_anova_df)
   
   htmlTable(Anova_table, 
             cgroup = Parameter_names, 
@@ -675,6 +687,11 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
 
   Comparisons <- rownames(Post_hoc_om2[[1]])
+
+    # Sa2
+    Post_hoc_sa2 <- do.call("rbind", Post_hoc_sa2)
+    rownames(Post_hoc_sa2) <- NULL
+    Post_hoc_sa2 <- dplyr::select(Post_hoc_sa2, p.adj)
   
     # Om2
     Post_hoc_om2 <- do.call("rbind", Post_hoc_om2)
@@ -708,7 +725,8 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
     rownames(Post_hoc_phi3) <- NULL
     Post_hoc_phi3 <- dplyr::select(Post_hoc_phi3, p.adj)
     
-    Post_hoc_table <- cbind(Post_hoc_om2, Post_hoc_om3, Post_hoc_nu, Post_hoc_M2, Post_hoc_M3, Post_hoc_phi2, Post_hoc_phi3)
+    # Post_hoc_table <- cbind(Post_hoc_om2, Post_hoc_om3, Post_hoc_nu, Post_hoc_M2, Post_hoc_M3, Post_hoc_phi2, Post_hoc_phi3)
+    Post_hoc_table <- cbind(Post_hoc_sa2, Post_hoc_om2, Post_hoc_om3, Post_hoc_nu, Post_hoc_M2, Post_hoc_M3, Post_hoc_phi2, Post_hoc_phi3)
     
     Post_hoc_table <- signif(Post_hoc_table, digits = 2)
     
@@ -726,7 +744,8 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
   
-Effect_size <- c(Aov_mod_om2, Aov_mod_om3, Aov_mod_nu, Aov_mod_M2, Aov_mod_M3, Aov_mod_phi2, Aov_mod_phi3)
+# Effect_size <- c(Aov_mod_om2, Aov_mod_om3, Aov_mod_nu, Aov_mod_M2, Aov_mod_M3, Aov_mod_phi2, Aov_mod_phi3)
+Effect_size <- c(Aov_mod_sa2, Aov_mod_om2, Aov_mod_om3, Aov_mod_nu, Aov_mod_M2, Aov_mod_M3, Aov_mod_phi2, Aov_mod_phi3)
 Effect_size <- lapply(Effect_size, etaSquared)
 Effect_size <- sapply(seq(Effect_size), function(i) data.frame(Effect_size[[i]]))
 Effect_size <- signif(unlist(Effect_size["eta.sq",]), digits=2)
@@ -746,6 +765,13 @@ htmlTable(Effect_size,
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
     
+# Sa2 K-W
+    Sa2_KW <- lapply_mod(Sa2_vector, function(i)tryCatch({dunn.test(Sa2_vector[[i]]$Sa2_vector, 
+                                      g = Sa2_vector[[i]]$Group, 
+                                      method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+                          },error=function(e){NA})
+                      ) # lapply_mod
+
     # Om2 K-W
     Om2_KW <- lapply_mod(Om2_vector, function(i)tryCatch({dunn.test(Om2_vector[[i]]$Om2_vector, 
                                       g = Om2_vector[[i]]$Group, 
@@ -792,7 +818,8 @@ htmlTable(Effect_size,
                            },error=function(e){NA})
                         ) # lapply_mod
 
-      Chi_sq <- signif(unlist(mapply(function(x) {x[[1]]}, x = c(Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW) ) ), digits=3)
+      # Chi_sq <- signif(unlist(mapply(function(x) {x[[1]]}, x = c(Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW) ) ), digits=3)
+Chi_sq <- signif(unlist(mapply(function(x) {x[[1]]}, x = c(Sa2_KW, Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW) ) ), digits=3)
       dim(Chi_sq) <- c(N_analyses, N_parameters)
       P_vals <- signif(1 - pchisq(Chi_sq, N_groups-1), digits = 2)
       Chi_p <- data.frame(Interleave_cols(Chi_sq, P_vals))
@@ -811,7 +838,9 @@ htmlTable(Effect_size,
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
       
-All_KW <- c(Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW)
+# All_KW <- c(Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW)
+All_KW <- c(Sa2_KW, Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW)
+
 Post_hoc_table <- sapply(seq(All_KW), function(i) rbind(All_KW[[i]]["P.adjusted"]))
 yes <- rep(NA, N_groups)
 Post_hoc_table <- signif(unlist(lapply(Post_hoc_table, function(x) if(is.na(x)){yes} else {x})), digits=2)
@@ -942,6 +971,7 @@ for (i in seq_along(Analyses_nos)){
 if (Do_plots == TRUE){
 
 for (i in seq(Om2_vector)){
+  levels(Sa2_vector[[i]]$Group) <- gsub(" ", "\n", levels(Sa2_vector[[i]]$Group)) ### Sa2
   levels(Om2_vector[[i]]$Group) <- gsub(" ", "\n", levels(Om2_vector[[i]]$Group))
   levels(Om3_vector[[i]]$Group) <- gsub(" ", "\n", levels(Om3_vector[[i]]$Group))
   levels(Nu_vector[[i]]$Group) <- gsub(" ", "\n", levels(Nu_vector[[i]]$Group))
@@ -957,6 +987,11 @@ Base_size <- 7
 # Box plot
 for (i in 1:length(Analyses_nos)){
   #tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+  Sa2_box <- ggplot(Sa2_vector[[i]], aes(Group, Sa2_vector))+
+    geom_boxplot(aes(colour = Group), size = 0.5)+
+    theme(plot.title = element_text(size = Title_size))+
+    ggtitle("Sa2")+ 
+    labs(x = "Group", y = "Sa2 posteriors")+ theme_grey(base_size = Base_size)
   Om2_box <- ggplot(Om2_vector[[i]], aes(Group, Om2_vector))+
     geom_boxplot(aes(colour = Group), size = 0.5)+
     theme(plot.title = element_text(size = Title_size))+
@@ -999,14 +1034,15 @@ for (i in 1:length(Analyses_nos)){
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("Phi3")+
     labs(x = "Group", y = "Phi3 posteriors") + theme_grey(base_size = Base_size)
-  grid.arrange(Om2_box+theme(legend.position="none"),
+  grid.arrange(Sa2_box+theme(legend.position="none"), ### Sa2
+               Om2_box+theme(legend.position="none"),
                Om3_box+theme(legend.position="none"),
                Nu_box+theme(legend.position="none"),
                M2_box+theme(legend.position="none"),
                M3_box+theme(legend.position="none"), 
                Phi2_box+theme(legend.position="none"),
                Phi3_box+theme(legend.position="none"), ncol=4, nrow=2, 
-               top = sprintf("Om2, Om3, log(Nu), M2, M3, Phi2 & Phi3 posteriors; A %d", 
+               top = sprintf("Sa2, Om2, Om3, log(Nu), M2, M3, Phi2 & Phi3 posteriors; A %d", 
                              Analyses_nos[i]), 
                heights=rep(5, 2), widths=rep(3, 4))
   
@@ -1014,10 +1050,15 @@ for (i in 1:length(Analyses_nos)){
 
 # Density plots
 for (i in 1:length(Analyses_nos)){
-  #tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+  tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+  Sa2_dens <- ggplot(Sa2_vector[[i]], aes(Sa2_vector))+
+    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+    theme(plot.title = element_text(size = Title_size))+
+    ggtitle("Sa2") + theme_grey(base_size = Base_size)
+  
   Om2_dens <- ggplot(Om2_vector[[i]], aes(Om2_vector))+
     geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
-    theme(legend.position="right", plot.title = element_text(size = Title_size))+
+    theme(legend.position="bottom", plot.title = element_text(size = Title_size))+
     ggtitle("Om2") + theme_grey(base_size = Base_size)
 
   Om3_dens <- ggplot(Om3_vector[[i]], aes(Om3_vector))+
@@ -1049,21 +1090,36 @@ for (i in 1:length(Analyses_nos)){
     ggtitle("Phi3") + theme_grey(base_size = Base_size)
   
   My_legend <- g_legend(Om2_dens)
-  grid.arrange(Om2_dens+theme(legend.position="none"),
+  grid.arrange(Sa2_dens+theme(legend.position="none"),
+               Om2_dens+theme(legend.position="none"),
                Om3_dens+theme(legend.position="none"), 
                Nu_dens+theme(legend.position="none"), 
                M2_dens+theme(legend.position="none"),
                M3_dens+theme(legend.position="none"), 
                Phi2_dens+theme(legend.position="none"),
                Phi3_dens+theme(legend.position="none"), ncol=4, nrow=2, 
-               top = sprintf("Om2, Om3, log(Nu), M2, M3, Phi2 & Phi3 posteriors; A %d", 
+               top = sprintf("Sa2, Om2, Om3, log(Nu), M2, M3, Phi2 & Phi3 posteriors; A %d", 
                              Analyses_nos[i]), 
-               My_legend,
                heights=rep(5, 2), widths=rep(3, 4))
+  My_legend
   
 }
 
+grid_arrange_shared_legend <- function(...) {
+    plots <- list(...)
+    g <- ggplotGrob(plots[[1]] + theme(legend.position="bottom"))$grobs
+    legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
+    lheight <- sum(legend$height)
+    grid.arrange(
+        do.call(arrangeGrob, lapply(plots, function(x)
+            x + theme(legend.position="none"))),
+        legend,
+        ncol = 1,
+        heights = unit.c(unit(1, "npc") - lheight, lheight))
+}
 
+grid_arrange_shared_legend(Sa2_dens, Om2_dens, Om3_dens, Nu_dens, M2_dens, M3_dens, 
+                           Phi2_dens, Phi3_dens)
 
 #-------------------------------------------------------
 # Plot Post-hoc comparisons for selected analyses
