@@ -998,12 +998,12 @@ for (i in 1:length(Analyses_nos)){
     ggtitle("Om2")+ 
     labs(x = "Group", y = "Om2 posteriors")+ theme_grey(base_size = Base_size)
     # scale_x_discrete(limits = levels(Group))
-  Om3_box <- ggplot(Om3_vector[[i]], aes(Group, Om3_vector))+
-    geom_boxplot(aes(colour = Group), size = 0.5)+
-    theme(plot.title = element_text(size = Title_size))+
-    ggtitle("Om3")+
-    labs(x = "Group", y = "Om3 posteriors") + theme_grey(base_size = Base_size)
-    # scale_x_discrete(limits = levels(Group))
+  # Om3_box <- ggplot(Om3_vector[[i]], aes(Group, Om3_vector))+
+  #   geom_boxplot(aes(colour = Group), size = 0.5)+
+  #   theme(plot.title = element_text(size = Title_size))+
+  #   ggtitle("Om3")+
+  #   labs(x = "Group", y = "Om3 posteriors") + theme_grey(base_size = Base_size)
+  #   # scale_x_discrete(limits = levels(Group))
   
   Nu_box <- ggplot(Nu_vector[[i]], aes(Group, Nu_vector))+
     geom_boxplot(aes(colour = Group), size = 0.5)+
@@ -1017,110 +1017,110 @@ for (i in 1:length(Analyses_nos)){
     ggtitle("M2")+
     labs(x = "Group", y = "M2 posteriors") + theme_grey(base_size = Base_size)
     # scale_x_discrete(limits = levels(Group))
-  M3_box <- ggplot(M3_vector[[i]], aes(Group, M3_vector))+
-    geom_boxplot(aes(colour = Group), size = 0.5)+
-    theme(plot.title = element_text(size = Title_size))+
-    ggtitle("M3")+
-    labs(x = "Group", y = "M3 posteriors") + theme_grey(base_size = Base_size)
-    # scale_x_discrete(limits = levels(Group))
+  # M3_box <- ggplot(M3_vector[[i]], aes(Group, M3_vector))+
+  #   geom_boxplot(aes(colour = Group), size = 0.5)+
+  #   theme(plot.title = element_text(size = Title_size))+
+  #   ggtitle("M3")+
+  #   labs(x = "Group", y = "M3 posteriors") + theme_grey(base_size = Base_size)
+  #   # scale_x_discrete(limits = levels(Group))
   
   Phi2_box <- ggplot(Phi2_vector[[i]], aes(Group, Phi2_vector))+
     geom_boxplot(aes(colour = Group), size = 0.5)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("Phi2")+
     labs(x = "Group", y = "Phi2 posteriors") + theme_grey(base_size = Base_size)
-  Phi3_box <- ggplot(Phi3_vector[[i]], aes(Group, Phi3_vector))+
-    geom_boxplot(aes(colour = Group), size = 0.5)+
-    theme(plot.title = element_text(size = Title_size))+
-    ggtitle("Phi3")+
-    labs(x = "Group", y = "Phi3 posteriors") + theme_grey(base_size = Base_size)
+  # Phi3_box <- ggplot(Phi3_vector[[i]], aes(Group, Phi3_vector))+
+  #   geom_boxplot(aes(colour = Group), size = 0.5)+
+  #   theme(plot.title = element_text(size = Title_size))+
+  #   ggtitle("Phi3")+
+  #   labs(x = "Group", y = "Phi3 posteriors") + theme_grey(base_size = Base_size)
+  
+  Box_plots <- c(Sa2_box, Om2_box, Nu_box, M2_box, Phi2_box)
+  N_box_plots <- length(Box_plots)/9
+  N_col <- ceiling(N_box_plots/2)
+  N_row <- floor(N_box_plots/2)
+  
   grid.arrange(Sa2_box+theme(legend.position="none"), ### Sa2
                Om2_box+theme(legend.position="none"),
-               Om3_box+theme(legend.position="none"),
+               # Om3_box+theme(legend.position="none"),
                Nu_box+theme(legend.position="none"),
                M2_box+theme(legend.position="none"),
-               M3_box+theme(legend.position="none"), 
+               # M3_box+theme(legend.position="none"), 
                Phi2_box+theme(legend.position="none"),
-               Phi3_box+theme(legend.position="none"), ncol=4, nrow=2, 
-               top = sprintf("Sa2, Om2, Om3, log(Nu), M2, M3, Phi2 & Phi3 posteriors; A %d", 
+               # Phi3_box+theme(legend.position="none"),
+               ncol=N_col, nrow=N_row,
+               top = sprintf("Sa2, Om2, log(Nu), M2 & Phi2 posteriors; A %d", 
                              Analyses_nos[i]), 
-               heights=rep(5, 2), widths=rep(3, 4))
-  
+               heights=rep(5, N_row), widths=rep(3, N_col))
 }
 
+
 # Density plots
+
+Alpha <- .3
+Size <- .5
+
 for (i in 1:length(Analyses_nos)){
-  tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+  # tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
   Sa2_dens <- ggplot(Sa2_vector[[i]], aes(Sa2_vector))+
-    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+    geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("Sa2") + theme_grey(base_size = Base_size)
   
   Om2_dens <- ggplot(Om2_vector[[i]], aes(Om2_vector))+
-    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+    geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(legend.position="bottom", plot.title = element_text(size = Title_size))+
     ggtitle("Om2") + theme_grey(base_size = Base_size)
 
-  Om3_dens <- ggplot(Om3_vector[[i]], aes(Om3_vector))+
-    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
-    theme(plot.title = element_text(size = Title_size))+
-    ggtitle("Om3") + theme_grey(base_size = Base_size)
+  # Om3_dens <- ggplot(Om3_vector[[i]], aes(Om3_vector))+
+  #   geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+  #   theme(plot.title = element_text(size = Title_size))+
+  #   ggtitle("Om3") + theme_grey(base_size = Base_size)
   
   Nu_dens <- ggplot(Nu_vector[[i]], aes(Nu_vector))+
-    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+    geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("log(Nu)") + theme_grey(base_size = Base_size)
   
   M2_dens <- ggplot(M2_vector[[i]], aes(M2_vector))+
-    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+    geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("M2") + theme_grey(base_size = Base_size)
-  M3_dens <- ggplot(M3_vector[[i]], aes(M3_vector))+
-    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
-    theme(plot.title = element_text(size = Title_size))+
-    ggtitle("M3") + theme_grey(base_size = Base_size)
+  # M3_dens <- ggplot(M3_vector[[i]], aes(M3_vector))+
+  #   geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+  #   theme(plot.title = element_text(size = Title_size))+
+  #   ggtitle("M3") + theme_grey(base_size = Base_size)
   
   Phi2_dens <- ggplot(Phi2_vector[[i]], aes(Phi2_vector))+
-    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+    geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("Phi2") + theme_grey(base_size = Base_size)
-  Phi3_dens <- ggplot(Phi3_vector[[i]], aes(Phi3_vector))+
-    geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
-    theme(plot.title = element_text(size = Title_size))+
-    ggtitle("Phi3") + theme_grey(base_size = Base_size)
+  # Phi3_dens <- ggplot(Phi3_vector[[i]], aes(Phi3_vector))+
+  #   geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
+  #   theme(plot.title = element_text(size = Title_size))+
+  #   ggtitle("Phi3") + theme_grey(base_size = Base_size)
   
+  Dens_plots <- c(Sa2_dens, Om2_dens, Nu_dens, M2_dens, Phi2_dens)
+  N_dens_plots <- length(Dens_plots)/9
+  N_col <- ceiling(N_dens_plots/2)
+  N_row <- floor(N_dens_plots/2)
   My_legend <- g_legend(Om2_dens)
+  
   grid.arrange(Sa2_dens+theme(legend.position="none"),
                Om2_dens+theme(legend.position="none"),
-               Om3_dens+theme(legend.position="none"), 
+               # Om3_dens+theme(legend.position="none"), 
                Nu_dens+theme(legend.position="none"), 
                M2_dens+theme(legend.position="none"),
-               M3_dens+theme(legend.position="none"), 
+               # M3_dens+theme(legend.position="none"), 
                Phi2_dens+theme(legend.position="none"),
-               Phi3_dens+theme(legend.position="none"), ncol=4, nrow=2, 
-               top = sprintf("Sa2, Om2, Om3, log(Nu), M2, M3, Phi2 & Phi3 posteriors; A %d", 
+               # Phi3_dens+theme(legend.position="none"),
+               ncol=N_col, nrow=N_row, 
+               My_legend,
+               top = sprintf("Sa2, Om2, log(Nu), M2 & Phi2 posteriors; A %d", 
                              Analyses_nos[i]), 
-               heights=rep(5, 2), widths=rep(3, 4))
-  My_legend
+               heights=rep(5, N_row), widths=rep(3, N_col))
+}
   
-}
-
-grid_arrange_shared_legend <- function(...) {
-    plots <- list(...)
-    g <- ggplotGrob(plots[[1]] + theme(legend.position="bottom"))$grobs
-    legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
-    lheight <- sum(legend$height)
-    grid.arrange(
-        do.call(arrangeGrob, lapply(plots, function(x)
-            x + theme(legend.position="none"))),
-        legend,
-        ncol = 1,
-        heights = unit.c(unit(1, "npc") - lheight, lheight))
-}
-
-grid_arrange_shared_legend(Sa2_dens, Om2_dens, Om3_dens, Nu_dens, M2_dens, M3_dens, 
-                           Phi2_dens, Phi3_dens)
-
 #-------------------------------------------------------
 # Plot Post-hoc comparisons for selected analyses
 #-------------------------------------------------------
