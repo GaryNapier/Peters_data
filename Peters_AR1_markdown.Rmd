@@ -120,7 +120,6 @@ for (i in seq(Priors_df_AR1)){
 Priors_df_AR1[[i]]$Sig2Mu <- ifelse(Priors_df_AR1[[i]]$Sig2Mu == 0, 0.006, Priors_df_AR1[[i]]$Sig2Mu)
 }
 
-
 # AR1 priors - horrible data-cleaning excercise!
 Priors_df_AR1 <- Priors_df_AR1[!sapply(Priors_df_AR1, is.null)]
 Priors_df_AR1 <- lapply(Priors_df_AR1, function(x) x[!sapply(x, is.null)])
