@@ -1,0 +1,502 @@
+---
+title: "Gilleen_Peters_combined"
+author: "Gary Napier"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+# opts_chunk$set(out.width='750px', dpi=200)
+
+```
+
+<!-- arguments --> 
+
+```{r echo = FALSE, cache=F}
+# Peters_function <- function(Subjects, Analyses_nos, Do_stats = FALSE, Do_plots = FALSE){
+
+Analyses_nos_peters <- c(31:36) # NB : MUST BE > 10
+Analyses_nos_gilleen <- c(9:14)
+
+```
+
+<!-- Load packages & set global chunk options-->
+
+```{r include=FALSE, echo = FALSE, cache=FALSE}
+
+# Source packages and custom functions
+source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/PACKAGES.R")
+
+```
+
+<!-- GET PETERS DATA -->
+
+```{r echo = FALSE, cache=F}
+tryCatch({
+setwd("U:/Peters_data")
+}, error=function(e){
+setwd("~/Dropbox/Peters_data")
+})
+
+#---------------------------------------
+# Load in data & clean
+#---------------------------------------
+
+# Read in data from CSV and Matlab files
+# Peters CSV file is for getting the groups (control/patient/normal control)
+if (!exists("Peters") | !exists("Analyses_peters")){
+  Peters <<- read.csv("Peters_data.csv")
+  Analyses_peters <<- readMat("Peters_analysis.mat")
+}
+
+# Get groups and clean data
+Group <- Peters$cond
+Group <- Group[complete.cases(Group)]
+levels(Group)[levels(Group) == "normal control"] <- "Ctrl"
+levels(Group)[levels(Group) == "deluded"] <- "Pat"
+levels(Group)[levels(Group) == "psychotic/ not deluded"] <- "Pat"
+levels(Group)[levels(Group) == "psychiatric control"] <- "Psych ctrl"
+Group <- factor(Group, levels = c("Ctrl", "Pat", "Psych ctrl"))
+Group_names <- as.character(unique(Group))
+
+#---------------------------------------
+# Misc setup
+#---------------------------------------
+
+# Group numbers
+Ctrl_peters <- 1:36
+Pat_peters <- 37:61
+Psych_ctrl_peters <- 62:83
+
+# For tables
+Blue <- "#F1F0FA"
+Table_options <- list(align=c("c","|"), align.header =c("c","|"), col.columns = c("none",Blue) )
+
+# Get model names/numbers
+Model_names_peters <- vector()
+for (i in seq_along(Analyses_nos_peters)){
+  Model_names_peters[i] <- sprintf("A%g", Analyses_nos_peters[i])
+}
+# remove NA
+Model_names_peters <- Model_names_peters[!is.na(Model_names_peters)]
+
+# Save names of priors
+Priors <- c("NuPrimeMu", "NuPrimeSa", "KappaMu", "KappaSa", "OmegaMu", 
+            "OmegaSa", "ThetaMu", "ThetaSa", "mMu", "mSa", "PhiMu", "PhiSa", "Sig2Mu", "Sig2Sa")
+
+Priors_names <- c("NuPrimeMu", "NuPrimeSa", "KappaMu", "KappaSa", "Om2Mu", 
+            "Om2Sa", "Om3Mu", "Om3Sa",  "ThetaMu", "ThetaSa", "m2Mu", "m2Sa", 
+            "m3Mu", "m3Sa", "Phi2Mu", "Phi2Sa", "Phi3Mu", "Phi3Sa", "Sig2Mu", "Sig2Sa")
+  
+# Misc
+options(digits = 4)
+Group_names_peters <- as.character(unique(Group))
+N_groups <- length(Group_names_peters)
+# Parameter_names <- c("Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
+# Parameter_names <- c("Sa2", "Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
+Parameter_names <- c("Sa2", "Om2", "log(Nu)", "M2", "Phi2")
+N_parameters <- length(Parameter_names)
+N_subjects_peters <- length(Analyses_peters[[1]][[1]][[1]][[1]])
+N_analyses <- length(Analyses_nos_peters)
+  
+# #----------------------------------------------------------------
+# # Get & display parameter priors used for each selected analysis
+# #----------------------------------------------------------------
+# 
+# # Create data frames of priors for selected analyses 
+# # Separate data frames for AR1 models
+# Priors_df_AR1 <- list()
+# for (i in seq(Analyses_nos)){
+#    Priors_df_AR1[[i]] <- Analyses[[1]][[Analyses_nos[i]]][[1]][,,1][c(Priors)]
+# }
+# 
+# # Fix error in original Matlab code
+# for (i in seq(Priors_df_AR1)){
+# Priors_df_AR1[[i]]$Sig2Mu <- ifelse(Priors_df_AR1[[i]]$Sig2Mu == 0, 0.006, Priors_df_AR1[[i]]$Sig2Mu)
+# }
+# 
+# 
+# # AR1 priors - horrible data-cleaning excercise!
+# Priors_df_AR1 <- Priors_df_AR1[!sapply(Priors_df_AR1, is.null)]
+# Priors_df_AR1 <- lapply(Priors_df_AR1, function(x) x[!sapply(x, is.null)])
+# Priors_df_AR1 <- lapply(Priors_df_AR1, function(x) lapply(x, function(x){
+#   paste(as.character(signif(x, digits = 3)), collapse = ", ")
+# }))
+# Priors_df_AR1 <- plyr::ldply(lapply(Priors_df_AR1, data.frame), data.frame)
+# rownames(Priors_df_AR1) <- Model_names
+# 
+# # # Tests for R markdown evaluation:
+# # Priors_df_test <- nrow(Priors_df) > 1
+# # Priors_df_AR1_test <- nrow(Priors_df_AR1) > 1
+  
+```
+
+<!-- PETERS -->
+<!-- GET POSTERIORS AND STATS TO PASS TO PLOTS/ DISPLAYS -->
+
+```{r echo=FALSE, cache=F}
+
+# Get posteriors from selected analyses - for overall stats
+Sa2_vector_peters <- vector("list", length(Analyses_peters[[1]]))
+Om2_vector_peters <- vector("list", length(Analyses_peters[[1]]))
+# Om3_vector_peters <- vector("list", length(Analyses_peters[[1]]))
+Nu_vector_peters <- vector("list", length(Analyses_peters[[1]]))
+M2_vector_peters  <- vector("list", length(Analyses_peters[[1]]))
+# M3_vector_peters  <- vector("list", length(Analyses_peters[[1]]))
+Phi2_vector_peters <- vector("list", length(Analyses_peters[[1]]))
+# Phi3_vector_peters <- vector("list", length(Analyses_peters[[1]]))
+
+for (j in seq_along(Analyses_nos_peters)){
+  for (i in 1:N_subjects_peters){
+Sa2_vector_peters[[Analyses_nos_peters[j]]][i] <- 
+Analyses_peters[[1]][[Analyses_nos_peters[j]]][[1]][[1]][[i]][[1]][9][[1]][2][[1]][,2]
+Om2_vector_peters[[Analyses_nos_peters[j]]][i] <- Analyses_peters[[1]][[Analyses_nos_peters[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][2]
+# Om3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][3]
+Nu_vector_peters[[Analyses_nos_peters[j]]][i] <- Analyses_peters[[1]][[Analyses_nos_peters[j]]][[1]][[1]][[i]][[1]][[10]][[1]][1]
+M2_vector_peters[[Analyses_nos_peters[j]]][i] <- Analyses_peters[[1]][[Analyses_nos_peters[j]]][[1]][[1]][[i]][[1]][9][[1]][[4]][2]
+# M3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[4]][3]
+Phi2_vector_peters[[Analyses_nos_peters[j]]][i] <- Analyses_peters[[1]][[Analyses_nos_peters[j]]][[1]][[1]][[i]][[1]][9][[1]][[3]][2]
+# Phi3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[3]][3]
+  }#for (i in 1:N_subjects)
+}#for (j in Analyses_nos_peters)
+ 
+# Clear NULL values from lists
+Sa2_vector_peters <- Sa2_vector_peters[vapply(Sa2_vector_peters, Negate(is.null), NA)]
+Om2_vector_peters <- Om2_vector_peters[vapply(Om2_vector_peters, Negate(is.null), NA)]
+# Om3_vector_peters <- Om3_vector_peters[vapply(Om3_vector_peters, Negate(is.null), NA)]
+Nu_vector_peters <- Nu_vector_peters[vapply(Nu_vector_peters, Negate(is.null), NA)]
+M2_vector_peters  <- M2_vector_peters[vapply(M2_vector_peters, Negate(is.null), NA)]
+# M3_vector_peters  <- M3_vector_peters[vapply(M3_vector_peters, Negate(is.null), NA)]
+Phi2_vector_peters <- Phi2_vector_peters[vapply(Phi2_vector_peters, Negate(is.null), NA)]
+# Phi3_vector_peters <- Phi3_vector_peters[vapply(Phi3_vector_peters, Negate(is.null), NA)]
+
+# Transform Nu
+Nu_vector_peters <- lapply(Nu_vector_peters, log)
+
+# Make list of data frames for ANOVA analyses
+Sa2_vector_peters <- lapply(Sa2_vector_peters, function(Sa2_vector_peters) cbind.data.frame(Group, Sa2_vector_peters))
+Om2_vector_peters <- lapply(Om2_vector_peters, function(Om2_vector_peters) cbind.data.frame(Group, Om2_vector_peters))
+# Om3_vector_peters <- lapply(Om3_vector_peters, function(Om3_vector_peters) cbind.data.frame(Group, Om3_vector_peters))
+Nu_vector_peters <- lapply(Nu_vector_peters, function(Nu_vector_peters) cbind.data.frame(Group, Nu_vector_peters))
+M2_vector_peters  <- lapply(M2_vector_peters, function(M2_vector_peters) cbind.data.frame(Group, M2_vector_peters))
+# M3_vector_peters <- lapply(M3_vector_peters, function(M3_vector_peters) cbind.data.frame(Group, M3_vector_peters))
+Phi2_vector_peters<- lapply(Phi2_vector_peters, function(Phi2_vector_peters) cbind.data.frame(Group, Phi2_vector_peters))
+# Phi3_vector_peters <- lapply(Phi3_vector_peters, function(Phi3_vector_peters) cbind.data.frame(Group, Phi3_vector_peters))
+
+```
+
+<!-- GET GILLEEN DATA -->
+
+```{r echo = FALSE,  warning=FALSE, message=FALSE, cache=FALSE}
+
+# Change WD
+tryCatch({
+setwd("U:\\Gilleen_data")
+}, error=function(e){
+setwd("~/Dropbox/Gilleen_Analysis/For Gary")
+})
+
+# Read in data from CSV and Matlab files
+# Gillen CSV file is for getting the groups (control/patient/normal control)
+if (!exists("Gilleen") | !exists("Gilleen_analyses_results")){
+  Gilleen_PDG_data <<- readMat("Gilleen_PDG_data_flip.mat")
+  Gilleen_beads_data <<- readMat("Gilleen_Beads_data_flip.mat")
+  Gilleen_analyses_results <<- readMat("Gilleen_analysis_results.mat")
+}
+
+# Groups
+Ctrl_gilleen <- 1:112
+Pat_gilleen <- 113:168
+Group_gilleen <- factor(c(rep("Ctrl", max(Ctrl_gilleen)), rep("Pat", max(Pat_gilleen)-min(Pat_gilleen)+1)), 
+                 levels = c("Ctrl", "Pat"))
+Group_names_gilleen <- as.character(unique(Group_gilleen))
+
+# Misc
+N_groups_gilleen <- length(Group_names_gilleen)
+N_subjects_gilleen <- length(Gilleen_analyses_results[[1]][[1]][[1]][[1]])
+N_analyses_gilleen <- length(Analyses_nos_gilleen)
+
+Datasets <- unlist(lapply(seq(length(Gilleen_analyses_results[[1]])),
+              function(i) {Gilleen_analyses_results[[1]][[i]][[1]][, , 1][["Dataset.used"]]}))
+
+Datasets <- gsub("data", "", Datasets)
+
+Datasets <- Datasets[Analyses_nos_gilleen]
+
+Mw_names <-  c("Z", "p", "r")
+
+# Get model names/numbers
+Model_names_gilleen <- sprintf("A%g_%s", Analyses_nos_gilleen, Datasets)  
+
+# Combine model names for both
+Model_names_comb <- paste(Model_names_peters,"/", Model_names_gilleen)
+
+```
+
+<!-- GET POSTERIORS AND STATS TO PASS TO PLOTS/ DISPLAYS -->
+
+```{r echo=FALSE,  warning=FALSE, message=FALSE, cache=F}
+
+# Get posteriors from selected analyses - for overall stats
+Sa2_vector_gilleen <- vector("list", length(Gilleen_analyses_results[[1]]))
+Om2_vector_gilleen  <- vector("list", length(Gilleen_analyses_results[[1]]))
+# Om3_vector_gilleen  <- vector("list", length(Gilleen_analyses_results[[1]]))
+Nu_vector_gilleen  <- vector("list", length(Gilleen_analyses_results[[1]]))
+M2_vector_gilleen   <- vector("list", length(Gilleen_analyses_results[[1]]))
+# M3_vector_gilleen   <- vector("list", length(Gilleen_analyses_results[[1]]))
+Phi2_vector_gilleen <- vector("list", length(Gilleen_analyses_results[[1]]))
+# Phi3_vector_gilleen <- vector("list", length(Gilleen_analyses_results[[1]]))
+for (j in seq_along(Analyses_nos_gilleen)){
+  for (i in 1:N_subjects_gilleen){
+Sa2_vector_gilleen[[Analyses_nos_gilleen[j]]][i] <- Gilleen_analyses_results[[1]][[Analyses_nos_gilleen[j]]][[1]][[1]][[i]][[1]][9][[1]][2][[1]][,2]
+Om2_vector_gilleen[[Analyses_nos_gilleen[j]]][i] <- Gilleen_analyses_results[[1]][[Analyses_nos_gilleen[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][2]
+# Om3_vector_gilleen[[Analyses_nos_gilleen[j]]][i] <- Gilleen_analyses_results[[1]][[Analyses_nos_gilleen[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][3]
+Nu_vector_gilleen[[Analyses_nos_gilleen[j]]][i] <- Gilleen_analyses_results[[1]][[Analyses_nos_gilleen[j]]][[1]][[1]][[i]][[1]][[10]][[1]][1]
+M2_vector_gilleen[[Analyses_nos_gilleen[j]]][i] <- Gilleen_analyses_results[[1]][[Analyses_nos_gilleen[j]]][[1]][[1]][[i]][[1]][9][[1]][[4]][2]
+# M3_vector_gilleen[[Analyses_nos_gilleen[j]]][i] <- Gilleen_analyses_results[[1]][[Analyses_nos_gilleen[j]]][[1]][[1]][[i]][[1]][9][[1]][[4]][3]
+Phi2_vector_gilleen[[Analyses_nos_gilleen[j]]][i] <- Gilleen_analyses_results[[1]][[Analyses_nos_gilleen[j]]][[1]][[1]][[i]][[1]][9][[1]][[3]][2]
+# Phi3_vector_gilleen[[Analyses_nos_gilleen[j]]][i] <- Gilleen_analyses_results[[1]][[Analyses_nos_gilleen[j]]][[1]][[1]][[i]][[1]][9][[1]][[3]][3]
+  }#for (i in 1:N_subjects)
+}#for (j in Analyses_nos)
+ 
+# Clear NULL values from lists
+Sa2_vector_gilleen <- Sa2_vector_gilleen[vapply(Sa2_vector_gilleen, Negate(is.null), NA)]
+Om2_vector_gilleen <- Om2_vector_gilleen[vapply(Om2_vector_gilleen, Negate(is.null), NA)]
+# Om3_vector_gilleen <- Om3_vector_gilleen[vapply(Om3_vector_gilleen, Negate(is.null), NA)]
+Nu_vector_gilleen <- Nu_vector_gilleen[vapply(Nu_vector_gilleen, Negate(is.null), NA)]
+M2_vector_gilleen  <- M2_vector_gilleen[vapply(M2_vector_gilleen, Negate(is.null), NA)]
+# M3_vector_gilleen  <- M3_vector_gilleen[vapply(M3_vector_gilleen, Negate(is.null), NA)]
+Phi2_vector_gilleen <- Phi2_vector_gilleen[vapply(Phi2_vector_gilleen, Negate(is.null), NA)]
+# Phi3_vector_gilleen <- Phi3_vector_gilleen[vapply(Phi3_vector_gilleen, Negate(is.null), NA)]
+
+# Transform Nu
+Nu_vector_gilleen <- lapply(Nu_vector_gilleen, log)
+
+# Make list of data frames for ANOVA (t-test) analyses
+Sa2_vector_gilleen <- lapply(Sa2_vector_gilleen, function(Sa2_vector_gilleen) cbind.data.frame(Group_gilleen, Sa2_vector_gilleen)) 
+Om2_vector_gilleen <- lapply(Om2_vector_gilleen, function(Om2_vector_gilleen) cbind.data.frame(Group_gilleen, Om2_vector_gilleen))
+# Om3_vector_gilleen <- lapply(Om3_vector_gilleen, function(Om3_vector_gilleen) cbind.data.frame(Group_gilleen, Om3_vector_gilleen))
+Nu_vector_gilleen <- lapply(Nu_vector_gilleen, function(Nu_vector_gilleen) cbind.data.frame(Group_gilleen, Nu_vector_gilleen))
+M2_vector_gilleen  <- lapply(M2_vector_gilleen, function(M2_vector_gilleen) cbind.data.frame(Group_gilleen, M2_vector_gilleen))
+# M3_vector_gilleen  <- lapply(M3_vector_gilleen, function(M3_vector_gilleen) cbind.data.frame(Group_gilleen, M3_vector_gilleen))
+Phi2_vector_gilleen <- lapply(Phi2_vector_gilleen, function(Phi2_vector_gilleen) cbind.data.frame(Group_gilleen, Phi2_vector_gilleen))
+# Phi3_vector_gilleen <- lapply(Phi3_vector_gilleen, function(Phi3_vector_gilleen) cbind.data.frame(Group_gilleen, Phi3_vector_gilleen))
+
+```
+
+<!-- COMBINE DATA & CLEAN -->
+
+```{r echo=FALSE,  warning=FALSE, message=FALSE, cache=F}
+
+# Sa2
+# Strip Psych ctrl of Peters
+Sa2_comb <- lapply(Sa2_vector_peters, function(x){
+  x[!x$Group == "Psych ctrl",]
+})
+# Combine
+Sa2_comb <- lapply( lapply(seq(Sa2_comb), function(i) {
+  data.frame(rbindlist(list(Sa2_comb[[i]], Sa2_vector_gilleen[[i]])))
+}), setNames, c("Group", "Sa2_comb"))
+# Sort out 'ghost' levels
+for (i in seq(Sa2_comb)){
+  Sa2_comb[[i]]$Group <- factor(Sa2_comb[[i]]$Group)
+}
+
+# Om2
+# Strip 
+Om2_comb <- lapply(Om2_vector_peters, function(x){
+  x[!x$Group == "Psych ctrl",]
+})
+# Combine
+Om2_comb <- lapply(lapply(seq(Om2_comb), function(i) {
+  data.frame(rbindlist(list(Om2_comb[[i]], Om2_vector_gilleen[[i]])))
+}), setNames, c("Group", "Om2_comb") )
+# Ghost levels
+for (i in seq(Om2_comb)){
+  Om2_comb[[i]]$Group <- factor(Om2_comb[[i]]$Group)
+}
+
+# Nu
+Nu_comb <- lapply(Nu_vector_peters, function(x){
+  x[!x$Group == "Psych ctrl",]
+})
+# Combine
+Nu_comb <- lapply(lapply(seq(Nu_comb), function(i) {
+  data.frame(rbindlist(list(Nu_comb[[i]], Nu_vector_gilleen[[i]])))
+}), setNames, c("Group", "Nu_comb") )
+# Ghost
+for (i in seq(Nu_comb)){
+  Nu_comb[[i]]$Group <- factor(Nu_comb[[i]]$Group)
+}
+
+# M2
+M2_comb <- lapply(M2_vector_peters, function(x){
+  x[!x$Group == "Psych ctrl",]
+})
+# Combine
+M2_comb <- lapply(lapply(seq(M2_comb), function(i) {
+  data.frame(rbindlist(list(M2_comb[[i]], M2_vector_gilleen[[i]])))
+}), setNames, c("Group", "M2_comb") )
+# Ghost
+for (i in seq(M2_comb)){
+  M2_comb[[i]]$Group <- factor(M2_comb[[i]]$Group)
+}
+
+# Phi2
+Phi2_comb <- lapply(Phi2_vector_peters, function(x){
+  x[!x$Group == "Psych ctrl",]
+})
+# Combine
+Phi2_comb <- lapply(lapply(seq(Phi2_comb), function(i) {
+  data.frame(rbindlist(list(Phi2_comb[[i]], Phi2_vector_gilleen[[i]])))
+}), setNames, c("Group", "Phi2_comb") )
+for (i in seq(Phi2_comb)){
+  Phi2_comb[[i]]$Group <- factor(Phi2_comb[[i]]$Group)
+}
+
+
+```
+
+<!-- COMBINED MEANS & SDs -->
+
+```{r echo=FALSE,  warning=FALSE, message=FALSE, cache=F}
+
+Col_names <- c("Mean", "SD")
+    # SA2
+    Sa2_mean_sd <- do.call("rbind", lapply( lapply(Sa2_comb, function(x) {
+     data.frame(rbind(
+          c(mean(x$Sa2_comb[Ctrl]), sd(x$Sa2_comb[Ctrl])), 
+          c(mean(x$Sa2_comb[Pat]), sd(x$Sa2_comb[Pat]))
+          ) ) 
+    }) ,setNames, Col_names ))
+
+    # OMEGA2
+    # Mean / sd groups
+    Om2_mean_sd <- do.call("rbind", lapply( lapply( Om2_comb, function(x) {
+     data.frame(rbind(
+          c(mean(x$Om2_comb[Ctrl]), sd(x$Om2_comb[Ctrl])), 
+          c(mean(x$Om2_comb[Pat]), sd(x$Om2_comb[Pat]))
+          ) ) 
+    }) ,setNames, Col_names ))
+  
+    # NU
+    # Mean/sd groups
+    Nu_mean_sd <- do.call("rbind", lapply( lapply( Nu_comb, function(x) {
+     data.frame(rbind(
+          c(mean(x$Nu_comb[Ctrl]), sd(x$Nu_comb[Ctrl])), 
+          c(mean(x$Nu_comb[Pat]), sd(x$Nu_comb[Pat]))
+          ) ) 
+    }) ,setNames, Col_names ))
+      
+    # M2
+    # Mean/sd groups
+    M2_mean_sd <-   do.call("rbind", lapply( lapply( M2_comb, function(x) {
+     data.frame(rbind(
+          c(mean(x$M2_comb[Ctrl]), sd(x$M2_comb[Ctrl])), 
+          c(mean(x$M2_comb[Pat]), sd(x$M2_comb[Pat]))
+          ) ) 
+    }) ,setNames, Col_names ))
+    
+    # PHI2
+    # Mean / sd groups
+    Phi2_mean_sd <-   do.call("rbind", lapply( lapply( Phi2_comb, function(x) {
+     data.frame(rbind(
+          c(mean(x$Phi2_comb[Ctrl]), sd(x$Phi2_comb[Ctrl])), 
+          c(mean(x$Phi2_comb[Pat]), sd(x$Phi2_comb[Pat]))
+          ) ) 
+    }) ,setNames, Col_names ))
+    
+        # Bring all means, SDs together
+    # Mean_sd <- cbind(Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
+      Mean_sd <- cbind(Sa2_mean_sd, Om2_mean_sd, Nu_mean_sd, M2_mean_sd, Phi2_mean_sd)
+      
+   htmlTable(txtRound(Mean_sd, digits = 2),
+        rnames=rep(Group_names_gilleen, N_analyses), 
+        rgroup = Model_names_comb, 
+        n.rgroup=rep(N_groups_gilleen, N_analyses), 
+        cgroup = Parameter_names, 
+        n.cgroup= rep(2, N_parameters), 
+        align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", "none", Blue, Blue))
+      
+```
+
+<!--  CREATE & DISPLAY PARAMETRIC MODELS - t-tests -->
+
+#### Summary of t-tests
+
+```{r echo=FALSE, cache=F}
+
+# Create t-tests:
+# Sa2
+T_Sa2_tests <- lapply(Sa2_comb, function(x)
+      tryCatch({
+      t.test(x$Sa2_comb ~ x$Group) # Try this first
+      }, error = function(e) {
+      NA # error-handler-code (Do this if error)
+      }) # tryCatch
+  ) # lapply
+T_Sa2 <- do.call("rbind", T_Sa2_tests)
+T_Sa2 <- data.frame(T_Sa2[,c("statistic", "parameter", "p.value")])
+T_Sa2 <- cbind(T_Sa2,
+               Effect = unlist(lapply(Sa2_comb,
+                function(x) cohensD(Sa2_comb ~ Group, data = x))))
+
+# Om2
+T_om2_tests <- lapply(Om2_comb, function(x) t.test(x$Om2_comb ~ x$Group))
+T_om2 <- do.call("rbind", T_om2_tests)
+T_om2 <- data.frame(T_om2[,c("statistic", "parameter", "p.value")])
+T_om2 <- cbind(T_om2, 
+               Effect = unlist(lapply(Om2_comb,
+                function(x) cohensD(Om2_comb ~ Group, data = x))))
+
+# Nu
+T_Nu <- lapply(Nu_comb, function(x) t.test(x$Nu_comb ~ x$Group))
+T_Nu <- do.call("rbind", T_Nu)
+T_Nu <- data.frame(T_Nu[,c("statistic", "parameter", "p.value")])
+T_Nu <- cbind(T_Nu, 
+              Effect = unlist(lapply(Nu_comb,
+                function(x) cohensD(Nu_comb ~ Group, data = x))))
+
+# M2
+T_M2 <- lapply(M2_comb, function(x) t.test(x$M2_comb ~ x$Group))
+T_M2 <- do.call("rbind", T_M2)
+T_M2 <- data.frame(T_M2[,c("statistic", "parameter", "p.value")])
+T_M2 <- cbind(T_M2, 
+              Effect = unlist(lapply(M2_comb,
+                function(x) cohensD(M2_comb ~ Group, data = x))))
+
+# Phi2
+T_Phi2 <- lapply(Phi2_comb, function(x) t.test(x$Phi2_comb ~ x$Group))
+T_Phi2 <- do.call("rbind", T_Phi2)
+T_Phi2 <- data.frame(T_Phi2[,c("statistic", "parameter", "p.value")])
+T_Phi2 <- cbind(T_Phi2, 
+                Effect = unlist(lapply(Phi2_comb,
+                 function(x) cohensD(Phi2_comb ~ Group, data = x))))
+
+Labels <- factor(c(rep("Sa2", 1), rep("Omega2", 1), rep("Nu", 1), rep("M2", 1), rep("Phi2", 1)), 
+                 levels = c("Sa2", "Omega2", "Nu", "M2", "Phi2")) 
+
+# Data frame of t-tests
+T_tests_table <- cbind(T_Sa2, T_om2, T_Nu, T_M2, T_Phi2)
+
+names(T_tests_table) <- rep(c("t", "df", "p", "d"), N_parameters)
+
+T_tests_table <- sapply(T_tests_table, unlist)
+
+# T_tests_table <- signif(T_tests_table, digits = 2)
+
+htmlTable(txtRound(T_tests_table, digits = 2),
+          rnames=Model_names_comb, 
+          cgroup = Parameter_names, 
+          n.cgroup= rep(4, N_parameters), 
+          align = c("c", "|"), align.header=c("c", "|"),
+          col.columns=c(rep("none", 4), rep(Blue, 4)), 
+          caption = "Welch t-test results, control vs patient")
+
+
+
+
+
+```
+
