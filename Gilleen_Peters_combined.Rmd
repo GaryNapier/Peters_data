@@ -1,5 +1,5 @@
 ---
-title: "Gilleen_Peters_combined"
+title: "Peters & Gilleen data combined analyses"
 author: "Gary Napier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
@@ -200,8 +200,8 @@ setwd("~/Dropbox/Gilleen_Analysis/For Gary")
 # Read in data from CSV and Matlab files
 # Gillen CSV file is for getting the groups (control/patient/normal control)
 if (!exists("Gilleen") | !exists("Gilleen_analyses_results")){
-  Gilleen_PDG_data <<- readMat("Gilleen_PDG_data_flip.mat")
-  Gilleen_beads_data <<- readMat("Gilleen_Beads_data_flip.mat")
+  # Gilleen_PDG_data <<- readMat("Gilleen_PDG_data_flip.mat")
+  # Gilleen_beads_data <<- readMat("Gilleen_Beads_data_flip.mat")
   Gilleen_analyses_results <<- readMat("Gilleen_analysis_results.mat")
 }
 
@@ -225,6 +225,8 @@ Datasets <- gsub("data", "", Datasets)
 Datasets <- Datasets[Analyses_nos_gilleen]
 
 Mw_names <-  c("Z", "p", "r")
+
+N_subj_comb <- N_subjects_peters+N_subjects_gilleen
 
 # Get model names/numbers
 Model_names_gilleen <- sprintf("A%g_%s", Analyses_nos_gilleen, Datasets)  
@@ -351,10 +353,10 @@ Phi2_comb <- lapply(Phi2_vector_peters, function(x){
 Phi2_comb <- lapply(lapply(seq(Phi2_comb), function(i) {
   data.frame(rbindlist(list(Phi2_comb[[i]], Phi2_vector_gilleen[[i]])))
 }), setNames, c("Group", "Phi2_comb") )
+# Ghost
 for (i in seq(Phi2_comb)){
   Phi2_comb[[i]]$Group <- factor(Phi2_comb[[i]]$Group)
 }
-
 
 ```
 
@@ -407,8 +409,9 @@ Col_names <- c("Mean", "SD")
           ) ) 
     }) ,setNames, Col_names ))
     
-        # Bring all means, SDs together
-    # Mean_sd <- cbind(Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
+# Bring all means, SDs together
+    
+# Mean_sd <- cbind(Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
       Mean_sd <- cbind(Sa2_mean_sd, Om2_mean_sd, Nu_mean_sd, M2_mean_sd, Phi2_mean_sd)
       
    htmlTable(txtRound(Mean_sd, digits = 2),
@@ -420,6 +423,42 @@ Col_names <- c("Mean", "SD")
         align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", "none", Blue, Blue))
       
 ```
+
+### **Test of t-test assumptions**
+##### Shapiro-Wilk test of normality 
+##### [<0.05 = NOT normal]
+
+
+```{r echo = FALSE, cache=F, htmlTable, results = 'asis'}
+
+# Sa2
+Norm_sa2 <- do.call("rbind", lapply(Sa2_comb, function(x) sapply(split(x$Sa2_comb, Group_gilleen), Shapiro_NA)))
+
+# Om2
+Norm_omega2 <- do.call("rbind", lapply(Om2_comb, function(x) sapply(split(x$Om2_comb, Group_gilleen), Shapiro_NA)))
+
+# Nu
+Norm_nu <- do.call("rbind", lapply(Nu_comb, function(x) sapply(split(x$Nu_comb, Group_gilleen), Shapiro_NA)))
+
+# M2
+Norm_M2 <- do.call("rbind", lapply(M2_comb, function(x) sapply(split(x$M2_comb, Group_gilleen), Shapiro_NA)))
+
+# Phi2
+Norm_phi2 <- do.call("rbind", lapply(Phi2_comb, function(x) sapply(split(x$Phi2_comb, Group_gilleen), Shapiro_NA)))
+
+# Norm_table <- cbind(Norm_omega2, Norm_omega3, Norm_nu, Norm_M2, Norm_M3, Norm_phi2, Norm_phi3)
+Norm_table <- cbind(Norm_sa2, Norm_omega2, Norm_nu, Norm_M2, Norm_phi2) 
+ 
+ htmlTable(txtRound(Norm_table, digits = 2), 
+           rnames=Model_names_comb, 
+           cgroup = Parameter_names, 
+           n.cgroup = rep(2, N_parameters), 
+           align = c("c", "|"), align.header=c("c", "|"),
+          col.columns=c(rep("none", 2), rep(Blue, 2)),
+          caption = "Tests of normality in posteriors, control and patient (< 0.05 = NOT normal)")
+
+```
+
 
 <!--  CREATE & DISPLAY PARAMETRIC MODELS - t-tests -->
 
@@ -495,8 +534,184 @@ htmlTable(txtRound(T_tests_table, digits = 2),
           caption = "Welch t-test results, control vs patient")
 
 
+```
 
+**-------------------------------------------------------------------------------------------**
 
+#### Non-parametric tests - Mann-whitney U
+
+```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
+
+# Sa2 mw
+Sa2_mw <- lapply(Sa2_comb, function(x) wilcox_test(x$Sa2_comb ~ x$Group))
+Sa2_effects <- do.call("rbind", lapply(Sa2_mw, function(x) {Mw_effect(statistic(x), N_subj_comb)}) )
+Sa2_mw <- do.call("rbind", lapply(Sa2_mw, function(x){c(statistic(x),pvalue(x))}) )
+Sa2_mw <- setNames(data.frame(cbind(Sa2_mw, Sa2_effects)), Mw_names)
+   
+# Om2 mw
+Om2_mw <- lapply(Om2_comb, function(x) wilcox_test(x$Om2_comb ~ x$Group))
+Om2_effects <- do.call("rbind", lapply(Om2_mw, function(x) {Mw_effect(statistic(x), N_subj_comb)}) )
+Om2_mw <- do.call("rbind", lapply(Om2_mw, function(x){c(statistic(x),pvalue(x))}) )
+Om2_mw <- setNames(data.frame(cbind(Om2_mw, Om2_effects)), Mw_names)
+    
+   
+# Nu mw
+Nu_mw <- lapply(Nu_comb, function(x) wilcox_test(x$Nu_comb ~ x$Group))
+Nu_effects <- do.call("rbind", lapply(Nu_mw, function(x) {Mw_effect(statistic(x), N_subj_comb)}) )
+Nu_mw <- do.call("rbind", lapply(Nu_mw, function(x){c(statistic(x),pvalue(x))}) )
+Nu_mw <- setNames(data.frame(cbind(Nu_mw, Nu_effects)), Mw_names)
+   
+# M2 mw
+M2_mw <- lapply(M2_comb, function(x) wilcox_test(x$M2_comb ~ x$Group))
+M2_effects <- do.call("rbind", lapply(M2_mw, function(x) {Mw_effect(statistic(x), N_subj_comb)}) )
+M2_mw <- do.call("rbind", lapply(M2_mw, function(x){c(statistic(x),pvalue(x))}) )
+M2_mw <- setNames(data.frame(cbind(M2_mw, M2_effects)), Mw_names)
+   
+# Phi2 mw
+Phi2_mw <- lapply(Phi2_comb, function(x) wilcox_test(x$Phi2_comb ~ x$Group))
+Phi2_effects <- do.call("rbind", lapply(Phi2_mw, function(x) {Mw_effect(statistic(x), N_subj_comb)}) )
+Phi2_mw <- do.call("rbind", lapply(Phi2_mw, function(x){c(statistic(x),pvalue(x))}) )
+Phi2_mw <- setNames(data.frame(cbind(Phi2_mw, Phi2_effects)), Mw_names)
+ 
+# MW_tables <- cbind(Om2_mw, Om3_mw, Nu_mw, M2_mw, M3_mw, Phi2_mw, Phi3_mw)    
+MW_tables <- cbind(Sa2_mw, Om2_mw, Nu_mw, M2_mw, Phi2_mw)
+ 
+ htmlTable(txtRound(MW_tables, digits = 2),
+           rnames=Model_names_comb,
+           n.cgroup = rep(3, N_parameters),
+            align = c("c", "|"), align.header=c("c", "|"),
+          col.columns=c(rep("none", 3), rep(Blue, 3)),
+          caption = "Mann-whitney U tests")
 
 ```
+
+**-------------------------------------------------------------------------------------------**
+
+#### Box & density plots of parameter posteriors
+
+```{r  echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
+
+for (i in seq(Om2_comb)){
+  levels(Sa2_comb[[i]]$Group) <- gsub(" ", "\n", levels(Sa2_comb[[i]]$Group))
+  levels(Om2_comb[[i]]$Group) <- gsub(" ", "\n", levels(Om2_comb[[i]]$Group))
+  levels(Nu_comb[[i]]$Group) <- gsub(" ", "\n", levels(Nu_comb[[i]]$Group))
+  levels(M2_comb[[i]]$Group) <- gsub(" ", "\n", levels(M2_comb[[i]]$Group))
+  levels(Phi2_comb[[i]]$Group) <- gsub(" ", "\n", levels(Phi2_comb[[i]]$Group))
+}
+  
+Title_size <- 7  
+Base_size <- 7
+  
+# Box plot
+for (i in 1:length(Analyses_nos_gilleen)){
+#tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+  Sa2_box <- ggplot(Sa2_comb[[i]], aes(Group, Sa2_comb))+
+      geom_boxplot(aes(colour = Group), size = 0.5)+
+      theme(plot.title = element_text(size = Title_size))+
+      ggtitle("Sa2")+ 
+      labs(x = "Group", y = "Sa2 posteriors")+ theme_grey(base_size = Base_size)
+  
+  Om2_box <- ggplot(Om2_comb[[i]], aes(Group, Om2_comb))+
+    geom_boxplot(aes(colour = Group), size = 0.5)+
+    theme(plot.title = element_text(size = Title_size))+
+    ggtitle("Om2")+ 
+    labs(x = "Group", y = "Om2 posteriors")+ theme_grey(base_size = Base_size)
+    # scale_x_discrete(limits = levels(Group))
+  
+  Nu_box <- ggplot(Nu_comb[[i]], aes(Group, Nu_comb))+
+    geom_boxplot(aes(colour = Group), size = 0.5)+
+    theme(plot.title = element_text(size = Title_size))+
+    ggtitle("log(Nu)")+
+    labs(x = "Group", y = "Nu posteriors") + theme_grey(base_size = Base_size)
+  
+  M2_box <- ggplot(M2_comb[[i]], aes(Group, M2_comb))+
+    geom_boxplot(aes(colour = Group), size = 0.5)+
+    theme(plot.title = element_text(size = Title_size))+
+    ggtitle("M2")+
+    labs(x = "Group", y = "M2 posteriors") + theme_grey(base_size = Base_size)
+    # scale_x_discrete(limits = levels(Group))
+
+  Phi2_box <- ggplot(Phi2_comb[[i]], aes(Group, Phi2_comb))+
+    geom_boxplot(aes(colour = Group), size = 0.5)+
+    theme(plot.title = element_text(size = Title_size))+
+    ggtitle("Phi2")+
+    labs(x = "Group", y = "Phi2 posteriors") + theme_grey(base_size = Base_size)
+
+    Box_plots <- c(Sa2_box, Om2_box, Nu_box, M2_box, Phi2_box)
+    N_box_plots <- length(Box_plots)/9
+    N_col <- ceiling(N_box_plots/2)
+    N_row <- floor(N_box_plots/2)
+  
+  grid.arrange(Sa2_box+theme(legend.position="none"),
+               Om2_box+theme(legend.position="none"),
+               Nu_box+theme(legend.position="none"),
+               M2_box+theme(legend.position="none"),
+               Phi2_box+theme(legend.position="none"),
+               ncol=N_col, nrow=N_row,
+               top = sprintf("Sa2, Om2, log(Nu), M2 & Phi2 posteriors; A %d", 
+                               Model_names_comb[i]), 
+               heights=rep(5, N_row), widths=rep(3, N_col))
+}
+
+```
+
+```{r  echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
+# Density plots
+  
+  Alpha <- .3
+  Size <- .5
+  
+for (i in 1:length(Analyses_nos_gilleen)){
+tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+    Sa2_dens <- ggplot(Sa2_comb[[i]], aes(Sa2_comb))+
+      geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
+      theme(plot.title = element_text(size = Title_size))+
+      ggtitle("Sa2") + theme_grey(base_size = Base_size)
+    
+    Om2_dens <- ggplot(Om2_comb[[i]], aes(Om2_comb))+
+      geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
+      theme(legend.position="bottom", plot.title = element_text(size = Title_size))+
+      ggtitle("Om2") + theme_grey(base_size = Base_size)
+    
+    Nu_dens <- ggplot(Nu_comb[[i]], aes(Nu_comb))+
+      geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
+      theme(plot.title = element_text(size = Title_size))+
+      ggtitle("log(Nu)") + theme_grey(base_size = Base_size)
+    
+    M2_dens <- ggplot(M2_comb[[i]], aes(M2_comb))+
+      geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
+      theme(plot.title = element_text(size = Title_size))+
+      ggtitle("M2") + theme_grey(base_size = Base_size)
+
+    Phi2_dens <- ggplot(Phi2_comb[[i]], aes(Phi2_comb))+
+      geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
+      theme(plot.title = element_text(size = Title_size))+
+      ggtitle("Phi2") + theme_grey(base_size = Base_size)
+    
+    Dens_plots <- c(Sa2_dens, Om2_dens, Nu_dens, M2_dens, Phi2_dens)
+    N_dens_plots <- length(Dens_plots)/9
+    N_col <- ceiling(N_dens_plots/2)
+    N_row <- floor(N_dens_plots/2)
+    My_legend <- g_legend(Om2_dens)
+    
+    grid.arrange(Sa2_dens+theme(legend.position="none"),
+                 Om2_dens+theme(legend.position="none"),
+                 Nu_dens+theme(legend.position="none"), 
+                 M2_dens+theme(legend.position="none"),
+                 Phi2_dens+theme(legend.position="none"),
+                 ncol=N_col, nrow=N_row, 
+                 My_legend,
+                 top = sprintf("Sa2, Om2, log(Nu), M2 & Phi2 posteriors; A %d", 
+                               Model_names_comb[i]), 
+                 heights=rep(5, N_row), widths=rep(3, N_col))
+}
+
+```
+
+
+
+
+
+
+
 
