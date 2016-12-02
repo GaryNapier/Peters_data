@@ -28,7 +28,7 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 Subjects <- 1
 Plot_subj <- FALSE
 
-Analyses_nos <- c(31:37) # NB : MUST BE > 10
+Analyses_nos <- c(31, 33, 38, 39) # NB : MUST BE > 10
 
 Do_stats = TRUE
 Do_plots = TRUE
