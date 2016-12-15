@@ -28,7 +28,9 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 Subjects <- 1
 Plot_subj <- FALSE
 
-Analyses_nos <- c(31, 33, 38, 39) # NB : MUST BE > 10
+Data <- "t2"
+
+Analyses_nos <- c(40, 41, 42, 43) # NB : MUST BE > 10
 
 Do_stats = TRUE
 Do_plots = TRUE
@@ -55,24 +57,33 @@ if (!exists("Peters") | !exists("Analyses")){
   Analyses <<- readMat("Peters_analysis.mat")
 }
 
-# Get groups and clean data
-Group <- Peters$cond
-Group <- Group[complete.cases(Group)]
-levels(Group)[levels(Group) == "normal control"] <- "Ctrl"
-levels(Group)[levels(Group) == "deluded"] <- "Pat"
-levels(Group)[levels(Group) == "psychotic/ not deluded"] <- "Pat"
-levels(Group)[levels(Group) == "psychiatric control"] <- "Psych ctrl"
-Group <- factor(Group, levels = c("Ctrl", "Pat", "Psych ctrl"))
-Group_names <- as.character(unique(Group))
-
 #---------------------------------------
 # Misc setup
 #---------------------------------------
 
 # Group numbers
+if (Data == "t1"){
 Ctrl <- 1:36
 Pat <- 37:61
 Psych_ctrl <- 62:83
+} else if (Data == "t2"){
+Ctrl <- 1:20
+Pat <- 21:37
+Psych_ctrl <- 38:55
+}
+
+# Get groups and clean data
+
+# Group <- Peters$cond
+# Group <- Group[complete.cases(Group)]
+# levels(Group)[levels(Group) == "normal control"] <- "Ctrl"
+# levels(Group)[levels(Group) == "deluded"] <- "Pat"
+# levels(Group)[levels(Group) == "psychotic/ not deluded"] <- "Pat"
+# levels(Group)[levels(Group) == "psychiatric control"] <- "Psych ctrl"
+
+Group <- c(rep("Ctrl", length(Ctrl)), rep("Pat", length(Pat)), rep("Psych ctrl", length(Psych_ctrl)))
+Group <- factor(Group, levels = c("Ctrl", "Pat", "Psych ctrl"))
+Group_names <- as.character(unique(Group))
 
 # For tables
 Blue <- "#F1F0FA"
@@ -101,7 +112,7 @@ N_groups <- length(Group_names)
 # Parameter_names <- c("Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
 Parameter_names <- c("Sa2", "Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
 N_parameters <- length(Parameter_names)
-N_subjects <- length(Analyses[[1]][[1]][[1]][[1]])
+N_subjects <- max(Psych_ctrl)
 N_analyses <- length(Analyses_nos)
   
 #----------------------------------------------------------------
@@ -190,9 +201,13 @@ M2_vector  <- lapply(M2_vector, function(M2_vector) cbind.data.frame(Group, M2_v
 M3_vector  <- lapply(M3_vector, function(M3_vector) cbind.data.frame(Group, M3_vector))
 Phi2_vector<- lapply(Phi2_vector, function(Phi2_vector) cbind.data.frame(Group, Phi2_vector))
 Phi3_vector<- lapply(Phi3_vector, function(Phi3_vector) cbind.data.frame(Group, Phi3_vector))
-  
+
+```
+
+
+```{r echo=FALSE, cache=F}
 # Measure fit for whole analyses selected
-  
+
 # Get responses (i.e. data), bead seq & HGF predictions
 Responses <- vector("list", length(Analyses[[1]]))
 Beads <- vector("list", length(Analyses[[1]]))
