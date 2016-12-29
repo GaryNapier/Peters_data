@@ -28,7 +28,7 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 Subjects <- 1
 Plot_subj <- FALSE
 
-Data <- "t2"
+Data <- "t2" # Either "t1" or "t2"
 
 Analyses_nos <- c(40, 41, 42, 43) # NB : MUST BE > 10
 
