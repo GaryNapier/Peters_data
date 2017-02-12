@@ -1,5 +1,21 @@
+
+```{r echo = FALSE, cache=F}
+# Peters_function <- function(Subjects, Analyses_nos, Do_stats = FALSE, Do_plots = FALSE){
+
+Subjects <- 1
+Plot_subj <- FALSE
+
+Data <- "t1" # EITHER "t1" or "t2"
+
+Analyses_nos <- c(45, 47) # NB : MUST BE > 10
+
+Do_stats = TRUE
+Do_plots = TRUE
+
+```
+
 ---
-title: "AR1 analyses of Peters data"
+title: "AR1 analyses of Peters `r Data` data"
 author: "Gary Napier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: html_document
@@ -9,7 +25,6 @@ output: html_document
 library(knitr)
 # opts_chunk$set(out.width='750px', dpi=200)
 ```
-
 
 <!-- Load packages & set global chunk options-->
 
@@ -21,21 +36,6 @@ source("https://raw.githubusercontent.com/GaryNapier/Packages_functions/master/P
 ```
 
 <!-- arguments --> 
-
-```{r echo = FALSE, cache=F}
-# Peters_function <- function(Subjects, Analyses_nos, Do_stats = FALSE, Do_plots = FALSE){
-
-Subjects <- 1
-Plot_subj <- FALSE
-
-Data <- "t2" # Either "t1" or "t2"
-
-Analyses_nos <- c(40, 41, 42, 43) # NB : MUST BE > 10
-
-Do_stats = TRUE
-Do_plots = TRUE
-
-```
 
 <!-- Load data & clean -->
 
@@ -53,7 +53,7 @@ setwd("~/Dropbox/Peters_data")
 # Read in data from CSV and Matlab files
 # Peters CSV file is for getting the groups (control/patient/normal control)
 if (!exists("Peters") | !exists("Analyses")){
-  Peters <<- read.csv("Peters_data.csv")
+  # Peters <<- read.csv("Peters_data.csv")
   Analyses <<- readMat("Peters_analysis.mat")
 }
 
@@ -101,16 +101,21 @@ Model_names <- Model_names[!is.na(Model_names)]
 Priors <- c("NuPrimeMu", "NuPrimeSa", "KappaMu", "KappaSa", "OmegaMu", 
             "OmegaSa", "ThetaMu", "ThetaSa", "mMu", "mSa", "PhiMu", "PhiSa", "Sig2Mu", "Sig2Sa")
 
+# Priors_names <- c("NuPrimeMu", "NuPrimeSa", "KappaMu", "KappaSa", "Om2Mu", 
+#             "Om2Sa", "Om3Mu", "Om3Sa",  "ThetaMu", "ThetaSa", "m2Mu", "m2Sa", 
+#             "m3Mu", "m3Sa", "Phi2Mu", "Phi2Sa", "Phi3Mu", "Phi3Sa", "Sig2Mu", "Sig2Sa")
+
 Priors_names <- c("NuPrimeMu", "NuPrimeSa", "KappaMu", "KappaSa", "Om2Mu", 
-            "Om2Sa", "Om3Mu", "Om3Sa",  "ThetaMu", "ThetaSa", "m2Mu", "m2Sa", 
-            "m3Mu", "m3Sa", "Phi2Mu", "Phi2Sa", "Phi3Mu", "Phi3Sa", "Sig2Mu", "Sig2Sa")
+            "Om2Sa", "ThetaMu", "ThetaSa", "m2Mu", "m2Sa", 
+            "Phi2Mu", "Phi2Sa", "SA2Mu", "Sa2Sa")
   
 # Misc
 options(digits = 4)
 Group_names <- as.character(unique(Group))
 N_groups <- length(Group_names)
 # Parameter_names <- c("Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
-Parameter_names <- c("Sa2", "Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
+# Parameter_names <- c("Sa2", "Om2", "Om3", "log(Nu)", "M2", "M3", "Phi2", "Phi3")
+Parameter_names <- c("Sa2", "Om2", "log(Nu)", "M2", "Phi2")
 N_parameters <- length(Parameter_names)
 N_subjects <- max(Psych_ctrl)
 N_analyses <- length(Analyses_nos)
@@ -149,8 +154,7 @@ rownames(Priors_df_AR1) <- Model_names
 ### **Parameter priors**
 #### AR1 model analyses:
 `r  do.call("htmlTable", c(list(Priors_df_AR1), Table_options))`
-**-------------------------------------------------------------------------------------------**
-
+***
 <!-- GET POSTERIORS AND STATS TO PASS TO PLOTS/ DISPLAYS -->
 
 ```{r echo=FALSE, cache=F}
@@ -158,36 +162,36 @@ rownames(Priors_df_AR1) <- Model_names
 # Get posteriors from selected analyses - for overall stats
 Sa2_vector <- vector("list", length(Analyses[[1]]))
 Om2_vector <- vector("list", length(Analyses[[1]]))
-Om3_vector <- vector("list", length(Analyses[[1]]))
+# Om3_vector <- vector("list", length(Analyses[[1]]))
 Nu_vector <- vector("list", length(Analyses[[1]]))
 M2_vector  <- vector("list", length(Analyses[[1]]))
-M3_vector  <- vector("list", length(Analyses[[1]]))
+# M3_vector  <- vector("list", length(Analyses[[1]]))
 Phi2_vector<- vector("list", length(Analyses[[1]]))
-Phi3_vector<- vector("list", length(Analyses[[1]]))
+# Phi3_vector<- vector("list", length(Analyses[[1]]))
 
 for (j in seq_along(Analyses_nos)){
   for (i in 1:N_subjects){
 Sa2_vector[[Analyses_nos[j]]][i] <- 
 Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][2][[1]][,2]
 Om2_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][2]
-Om3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][3]
+# Om3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[6]][3]
 Nu_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[10]][[1]][1]
 M2_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[4]][2]
-M3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[4]][3]
+# M3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[4]][3]
 Phi2_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[3]][2]
-Phi3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[3]][3]
+# Phi3_vector[[Analyses_nos[j]]][i] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][9][[1]][[3]][3]
   }#for (i in 1:N_subjects)
 }#for (j in Analyses_nos)
  
 # Clear NULL values from lists
 Sa2_vector <- Sa2_vector[vapply(Sa2_vector, Negate(is.null), NA)]
 Om2_vector <- Om2_vector[vapply(Om2_vector, Negate(is.null), NA)]
-Om3_vector <- Om3_vector[vapply(Om3_vector, Negate(is.null), NA)]
+# Om3_vector <- Om3_vector[vapply(Om3_vector, Negate(is.null), NA)]
 Nu_vector <- Nu_vector[vapply(Nu_vector, Negate(is.null), NA)]
 M2_vector  <- M2_vector[vapply(M2_vector, Negate(is.null), NA)]
-M3_vector  <- M3_vector[vapply(M3_vector, Negate(is.null), NA)]
+# M3_vector  <- M3_vector[vapply(M3_vector, Negate(is.null), NA)]
 Phi2_vector<- Phi2_vector[vapply(Phi2_vector, Negate(is.null), NA)]
-Phi3_vector<- Phi3_vector[vapply(Phi3_vector, Negate(is.null), NA)]
+# Phi3_vector<- Phi3_vector[vapply(Phi3_vector, Negate(is.null), NA)]
 
 # Transform Nu
 Nu_vector <- lapply(Nu_vector, log)
@@ -195,108 +199,109 @@ Nu_vector <- lapply(Nu_vector, log)
 # Make list of data frames for ANOVA analyses
 Sa2_vector <- lapply(Sa2_vector, function(Sa2_vector) cbind.data.frame(Group, Sa2_vector))
 Om2_vector <- lapply(Om2_vector, function(Om2_vector) cbind.data.frame(Group, Om2_vector))
-Om3_vector <- lapply(Om3_vector, function(Om3_vector) cbind.data.frame(Group, Om3_vector))
+# Om3_vector <- lapply(Om3_vector, function(Om3_vector) cbind.data.frame(Group, Om3_vector))
 Nu_vector <- lapply(Nu_vector, function(Nu_vector) cbind.data.frame(Group, Nu_vector))
 M2_vector  <- lapply(M2_vector, function(M2_vector) cbind.data.frame(Group, M2_vector))
-M3_vector  <- lapply(M3_vector, function(M3_vector) cbind.data.frame(Group, M3_vector))
+# M3_vector  <- lapply(M3_vector, function(M3_vector) cbind.data.frame(Group, M3_vector))
 Phi2_vector<- lapply(Phi2_vector, function(Phi2_vector) cbind.data.frame(Group, Phi2_vector))
-Phi3_vector<- lapply(Phi3_vector, function(Phi3_vector) cbind.data.frame(Group, Phi3_vector))
+# Phi3_vector<- lapply(Phi3_vector, function(Phi3_vector) cbind.data.frame(Group, Phi3_vector))
 
 ```
 
-
+<!-- BOOC -->
 ```{r echo=FALSE, cache=F}
 # Measure fit for whole analyses selected
 
-# Get responses (i.e. data), bead seq & HGF predictions
-Responses <- vector("list", length(Analyses[[1]]))
-Beads <- vector("list", length(Analyses[[1]]))
-Predictions <- vector("list", length(Analyses[[1]]))
-Mu2_0 <- vector("list", length(Analyses[[1]]))
-Learning_rate <- vector("list", length(Analyses[[1]]))
-for (j in seq_along(Analyses_nos)){
-  for (i in 1:N_subjects){
-# r.y:
-Responses[[Analyses_nos[j]]][[i]] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[1]]
-# r.u:
-Beads[[Analyses_nos[j]]][[i]] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[2]]
-if (Analyses_nos[j] < 11){
-  # r.traj.mu:
-  Predictions[[Analyses_nos[j]]][[i]] <-   Tapas_sgm(Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[11]][[1]][,2,1], 1) 
-  # r.p_prc.mu2_0; the '0th' prediction (prior):
-  Mu2_0[[Analyses_nos[j]]][[i]] <- Tapas_sgm(Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[9]][[1]][1], 1)
-  # r.traj.wt; Learning rate
-  Learning_rate[[Analyses_nos[j]]][[i]] <- list()
-}else{
-  # r.traj.mu:
-  Predictions[[Analyses_nos[j]]][[i]] <- Tapas_sgm(Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[11]][[1]][,2], 1) 
-  # r.p_prc.mu2_0; the '0th' prediction (prior):
-  Mu2_0[[Analyses_nos[j]]][[i]] <- Tapas_sgm(Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[9]][[1]][2], 1)
-  # r.traj.wt; Learning rate
-  Learning_rate[[Analyses_nos[j]]][[i]] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[11]][[11]][,1]
-      
-    }
-  }#(i in 1:N_subjects)
-}#(j in 1:length(Analyses_nos))
+# # Get responses (i.e. data), bead seq & HGF predictions
+# Responses <- vector("list", length(Analyses[[1]]))
+# Beads <- vector("list", length(Analyses[[1]]))
+# Predictions <- vector("list", length(Analyses[[1]]))
+# Mu2_0 <- vector("list", length(Analyses[[1]]))
+# Learning_rate <- vector("list", length(Analyses[[1]]))
+# for (j in seq_along(Analyses_nos)){
+#   for (i in 1:N_subjects){
+# # r.y:
+# Responses[[Analyses_nos[j]]][[i]] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[1]]
+# # r.u:
+# Beads[[Analyses_nos[j]]][[i]] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[2]]
+# if (Analyses_nos[j] < 11){
+#   # r.traj.mu:
+#   Predictions[[Analyses_nos[j]]][[i]] <-   Tapas_sgm(Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[11]][[1]][,2,1], 1) 
+#   # r.p_prc.mu2_0; the '0th' prediction (prior):
+#   Mu2_0[[Analyses_nos[j]]][[i]] <- Tapas_sgm(Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[9]][[1]][1], 1)
+#   # r.traj.wt; Learning rate
+#   Learning_rate[[Analyses_nos[j]]][[i]] <- list()
+# }else{
+#   # r.traj.mu:
+#   Predictions[[Analyses_nos[j]]][[i]] <- Tapas_sgm(Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[11]][[1]][,2], 1) 
+#   # r.p_prc.mu2_0; the '0th' prediction (prior):
+#   Mu2_0[[Analyses_nos[j]]][[i]] <- Tapas_sgm(Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[9]][[1]][2], 1)
+#   # r.traj.wt; Learning rate
+#   Learning_rate[[Analyses_nos[j]]][[i]] <- Analyses[[1]][[Analyses_nos[j]]][[1]][[1]][[i]][[1]][[11]][[11]][,1]
+#       
+#     }
+#   }#(i in 1:N_subjects)
+# }#(j in 1:length(Analyses_nos))
+# 
+#  # Remove NULLS. Not sure why each one is different...
+# Responses <- Responses[vapply(Responses, Negate(is.null), NA)]
+# Beads <- Beads[vapply(Beads, Negate(is.null), NA)]
+# Predictions <- Predictions[vapply(Predictions, Negate(is.null), NA)]
+# Mu2_0 <- Filter(Negate(is.null), Mu2_0)
+# Learning_rate <- Learning_rate[vapply(Learning_rate, Negate(is.null), NA)]
+# 
+# # Useful!
+# N_beads <- lapply(Beads, function(x) unlist(unique(lapply(x, length))))
+# N_predictions <- lapply(Predictions, function(x) unlist(unique(lapply(x, length))))
+# N_responses <- lapply(Responses, function(x) unlist(unique(lapply(x, length))))
+# 
+# # Pre-allocate for for-loops
+# Opp_bead_indeces <- vector("list", length(Beads)) 
+# Opp_bead_indeces <- lapply(Opp_bead_indeces, function(x){
+#   vector("list", N_subjects)
+# })
+# 
+# # Loops for getting true/false for 'bead of opposite colour' from bead seqs
+# for (k in 1:length(Beads)){
+#   for (j in 1:length(Beads[[k]])){
+#     for(i in 2:length(Beads[[k]][[j]])){
+#       Opp_bead_indeces[[k]][[j]][i] <- !(Beads[[k]][[j]][i]-Beads[[k]][[j]][i-1] == 0)
+#     }
+#   }
+# }
+# # Find indeces
+# Opp_bead_indeces <- lapply(Opp_bead_indeces, function(x){
+#   lapply(x, function(y) which(y == TRUE))
+# })
+# Fit_BOOC_whole_model <- vector("list", length(Analyses_nos))
+# 
+# for (i in 1:length(Opp_bead_indeces)){
+#   for (j in 1:length(Opp_bead_indeces[[i]])){
+#     
+#     Fit_BOOC_whole_model[[i]][j] <- 
+#       signif(sum((Responses[[i]][[j]][Opp_bead_indeces[[i]][[j]]] 
+#                   - Predictions[[i]][[j]][Opp_bead_indeces[[i]][[j]]])^2), digits = 2)
+#   }
+# }
+#   
+# # Make a copy to pass to 'individual subjects' section - allows simple 
+# # subsetting of BOOC fit by subjects selected
+# Fit_BOOC_whole_model_copy <- Fit_BOOC_whole_model
+# # Weight Fit_BOOC_whole_model_copy by length of trials (number of beads) divided by 10 
+# Fit_BOOC_subject <- lapply(seq_along(Fit_BOOC_whole_model_copy), function(i){
+#   (Fit_BOOC_whole_model_copy[[i]]/(N_beads[[i]]/10))
+# })
+# 
+# # Take the mean of the fits and adjust by length of bead seq (N_beads) for each analysis
+# Fit_BOOC_whole_model <- lapply_mod(Fit_BOOC_whole_model,
+#                                    function(i) mean(Fit_BOOC_whole_model[[i]])/N_beads[[i]])
+# 
+# # For predictions, need to concatenate Mu2_0 prior at the start of each Prediction vector
+# for (j in seq(Predictions))
+#   for (i in seq(Predictions[[j]])){
+#     Predictions[[j]][[i]] <- append(Predictions[[j]][[i]], Mu2_0[[j]][i], 0)
+#   }
 
- # Remove NULLS. Not sure why each one is different...
-Responses <- Responses[vapply(Responses, Negate(is.null), NA)]
-Beads <- Beads[vapply(Beads, Negate(is.null), NA)]
-Predictions <- Predictions[vapply(Predictions, Negate(is.null), NA)]
-Mu2_0 <- Filter(Negate(is.null), Mu2_0)
-Learning_rate <- Learning_rate[vapply(Learning_rate, Negate(is.null), NA)]
-
-# Useful!
-N_beads <- lapply(Beads, function(x) unlist(unique(lapply(x, length))))
-N_predictions <- lapply(Predictions, function(x) unlist(unique(lapply(x, length))))
-N_responses <- lapply(Responses, function(x) unlist(unique(lapply(x, length))))
-
-# Pre-allocate for for-loops
-Opp_bead_indeces <- vector("list", length(Beads)) 
-Opp_bead_indeces <- lapply(Opp_bead_indeces, function(x){
-  vector("list", N_subjects)
-})
-
-# Loops for getting true/false for 'bead of opposite colour' from bead seqs
-for (k in 1:length(Beads)){
-  for (j in 1:length(Beads[[k]])){
-    for(i in 2:length(Beads[[k]][[j]])){
-      Opp_bead_indeces[[k]][[j]][i] <- !(Beads[[k]][[j]][i]-Beads[[k]][[j]][i-1] == 0)
-    }
-  }
-}
-# Find indeces
-Opp_bead_indeces <- lapply(Opp_bead_indeces, function(x){
-  lapply(x, function(y) which(y == TRUE))
-})
-Fit_BOOC_whole_model <- vector("list", length(Analyses_nos))
-
-for (i in 1:length(Opp_bead_indeces)){
-  for (j in 1:length(Opp_bead_indeces[[i]])){
-    
-    Fit_BOOC_whole_model[[i]][j] <- 
-      signif(sum((Responses[[i]][[j]][Opp_bead_indeces[[i]][[j]]] 
-                  - Predictions[[i]][[j]][Opp_bead_indeces[[i]][[j]]])^2), digits = 2)
-  }
-}
-  
-# Make a copy to pass to 'individual subjects' section - allows simple 
-# subsetting of BOOC fit by subjects selected
-Fit_BOOC_whole_model_copy <- Fit_BOOC_whole_model
-# Weight Fit_BOOC_whole_model_copy by length of trials (number of beads) divided by 10 
-Fit_BOOC_subject <- lapply(seq_along(Fit_BOOC_whole_model_copy), function(i){
-  (Fit_BOOC_whole_model_copy[[i]]/(N_beads[[i]]/10))
-})
-
-# Take the mean of the fits and adjust by length of bead seq (N_beads) for each analysis
-Fit_BOOC_whole_model <- lapply_mod(Fit_BOOC_whole_model,
-                                   function(i) mean(Fit_BOOC_whole_model[[i]])/N_beads[[i]])
-
-# For predictions, need to concatenate Mu2_0 prior at the start of each Prediction vector
-for (j in seq(Predictions))
-  for (i in seq(Predictions[[j]])){
-    Predictions[[j]][[i]] <- append(Predictions[[j]][[i]], Mu2_0[[j]][i], 0)
-  }
 ```
 
 
@@ -319,10 +324,10 @@ Aov_mod_om2 <- lapply(Om2_vector, function(x) aov(x$Om2_vector ~ x$Group))
 Post_hoc_om2 <- lapply_mod(Aov_mod_om2, function(i) 
   data.frame(TukeyHSD(Aov_mod_om2[[i]])$`x$Group`))
 # Om3
-Aov_mod_om3 <- lapply(Om3_vector, function(x) aov(x$Om3_vector ~ x$Group))
-# Get post-hoc tests
-Post_hoc_om3 <- lapply_mod(Aov_mod_om3, function(i) 
-  data.frame(TukeyHSD(Aov_mod_om3[[i]])$`x$Group`))
+# Aov_mod_om3 <- lapply(Om3_vector, function(x) aov(x$Om3_vector ~ x$Group))
+# # Get post-hoc tests
+# Post_hoc_om3 <- lapply_mod(Aov_mod_om3, function(i) 
+#   data.frame(TukeyHSD(Aov_mod_om3[[i]])$`x$Group`))
 
 # Nu model
 Aov_mod_nu <- lapply(Nu_vector, function(x) aov(x$Nu_vector ~ x$Group))
@@ -336,10 +341,10 @@ Aov_mod_M2 <- lapply(M2_vector, function(x) aov(x$M2_vector ~ x$Group))
 Post_hoc_M2 <- lapply_mod(Aov_mod_M2, function(i) 
   data.frame(TukeyHSD(Aov_mod_M2[[i]])$`x$Group`))
 # M3
-Aov_mod_M3 <- lapply(M3_vector, function(x) aov(x$M3_vector ~ x$Group))
-# Get post-hoc tests
-Post_hoc_M3 <- lapply_mod(Aov_mod_M3, function(i) 
-  data.frame(TukeyHSD(Aov_mod_M3[[i]])$`x$Group`))
+# Aov_mod_M3 <- lapply(M3_vector, function(x) aov(x$M3_vector ~ x$Group))
+# # Get post-hoc tests
+# Post_hoc_M3 <- lapply_mod(Aov_mod_M3, function(i) 
+#   data.frame(TukeyHSD(Aov_mod_M3[[i]])$`x$Group`))
 
 # Phi2
 Aov_mod_phi2 <- lapply(Phi2_vector, function(x) aov(x$Phi2_vector ~ x$Group))
@@ -347,10 +352,10 @@ Aov_mod_phi2 <- lapply(Phi2_vector, function(x) aov(x$Phi2_vector ~ x$Group))
 Post_hoc_phi2 <- lapply_mod(Aov_mod_phi2, function(i) 
   data.frame(TukeyHSD(Aov_mod_phi2[[i]])$`x$Group`))
 # Phi3
-Aov_mod_phi3 <- lapply(Phi3_vector, function(x) aov(x$Phi3_vector ~ x$Group))
-# Get post-hoc tests
-Post_hoc_phi3 <- lapply_mod(Aov_mod_phi3, function(i) 
-  data.frame(TukeyHSD(Aov_mod_phi3[[i]])$`x$Group`))
+# Aov_mod_phi3 <- lapply(Phi3_vector, function(x) aov(x$Phi3_vector ~ x$Group))
+# # Get post-hoc tests
+# Post_hoc_phi3 <- lapply_mod(Aov_mod_phi3, function(i) 
+#   data.frame(TukeyHSD(Aov_mod_phi3[[i]])$`x$Group`))
 
 # Prep post-hoc comparisons for plot as data frame
 
@@ -363,10 +368,10 @@ for (i in 1: length(Post_hoc_sa2)){
 for (i in 1: length(Post_hoc_om2)){
   Post_hoc_om2[[i]]$Comparison <- factor(row.names(Post_hoc_om2[[i]]))
 }
-# Om3
-for (i in 1: length(Post_hoc_om3)){
-  Post_hoc_om3[[i]]$Comparison <- factor(row.names(Post_hoc_om3[[i]]))
-}
+# # Om3
+# for (i in 1: length(Post_hoc_om3)){
+#   Post_hoc_om3[[i]]$Comparison <- factor(row.names(Post_hoc_om3[[i]]))
+# }
 
 # Nu  
 for (i in 1: length(Post_hoc_nu)){
@@ -377,22 +382,28 @@ for (i in 1: length(Post_hoc_nu)){
 for (i in 1: length(Post_hoc_M2)){
   Post_hoc_M2[[i]]$Comparison <- factor(row.names(Post_hoc_M2[[i]]))
 }
-# M3
-for (i in 1: length(Post_hoc_M3)){
-  Post_hoc_M3[[i]]$Comparison <- factor(row.names(Post_hoc_M3[[i]]))
-}
+# # M3
+# for (i in 1: length(Post_hoc_M3)){
+#   Post_hoc_M3[[i]]$Comparison <- factor(row.names(Post_hoc_M3[[i]]))
+# }
 
 # Phi2
 for (i in 1: length(Post_hoc_phi2)){
   Post_hoc_phi2[[i]]$Comparison <- factor(row.names(Post_hoc_phi2[[i]]))
 }
 # Phi3
-for (i in 1: length(Post_hoc_phi2)){
-  Post_hoc_phi3[[i]]$Comparison <- factor(row.names(Post_hoc_phi3[[i]]))
-}
+# for (i in 1: length(Post_hoc_phi2)){
+#   Post_hoc_phi3[[i]]$Comparison <- factor(row.names(Post_hoc_phi3[[i]]))
+# }
 
 # Labels <- factor(c(rep("Omega2", N_groups), rep("Omega3", N_groups),  rep("Nu", N_groups), rep("M2", N_groups), rep("M3", N_groups), rep("Phi2", N_groups), rep("Phi3", N_groups)), levels = c("Omega2", "Omega3", "Nu", "M2", "M3", "Phi2", "Phi3")) 
-Labels <- factor(c(rep("Sa2", N_groups), rep("Omega2", N_groups), rep("Omega3", N_groups),  rep("Nu", N_groups), rep("M2", N_groups), rep("M3", N_groups), rep("Phi2", N_groups), rep("Phi3", N_groups)), levels = c("Sa2", "Omega2", "Omega3", "Nu", "M2", "M3", "Phi2", "Phi3")) 
+# Labels <- factor(c(rep("Sa2", N_groups), rep("Omega2", N_groups), rep("Omega3", N_groups),  rep("Nu", N_groups), rep("M2", N_groups), rep("M3", N_groups), rep("Phi2", N_groups), rep("Phi3", N_groups)), levels = c("Sa2", "Omega2", "Omega3", "Nu", "M2", "M3", "Phi2", "Phi3")) 
+Labels <- factor(c(rep("Sa2", N_groups), 
+                   rep("Omega2", N_groups), 
+                   rep("Nu", N_groups), 
+                   rep("M2", N_groups), 
+                   rep("Phi2", N_groups)), 
+                   levels = c("Sa2", "Omega2", "Nu", "M2", "Phi2"))
 
 # Create data frames in a list combining the post-hoc tests on Om & Nu &
 # adding label for each parameter (for plotting)
@@ -401,110 +412,117 @@ Post_hoc_df <- vector("list", length(Analyses_nos)) # Predefine
 #   Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_om2[[i]], Post_hoc_om3[[i]], Post_hoc_nu[[i]], 
 #                                   Post_hoc_M2[[i]], Post_hoc_M3[[i]], Post_hoc_phi2[[i]], Post_hoc_phi3[[i]]), Labels)
 # }
+# for (i in 1:length(Analyses_nos)){
+# Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_om3[[i]], Post_hoc_nu[[i]], Post_hoc_M2[[i]], Post_hoc_M3[[i]], Post_hoc_phi2[[i]], Post_hoc_phi3[[i]]), Labels)
+# }
 for (i in 1:length(Analyses_nos)){
-Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_om3[[i]], Post_hoc_nu[[i]], Post_hoc_M2[[i]], Post_hoc_M3[[i]], Post_hoc_phi2[[i]], Post_hoc_phi3[[i]]), Labels)
+Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_nu[[i]], Post_hoc_M2[[i]], Post_hoc_phi2[[i]]), Labels)
 }
 
 ```
-### **Test of ANOVA assumptions**
+<!--### **Test of ANOVA assumptions**
 ##### Shapiro-Wilk tests of normality of residuals 
-##### [<0.05 = NOT normal]
+##### [<0.05 = NOT normal] -->
 
 ```{r echo = FALSE, cache=F, htmlTable, results = 'asis'}
 
-  #Aov_mod_sa2
-  SW_sa2 <- signif(sapply(Aov_mod_sa2, function(x) Shapiro_NA(residuals(x))), digits = 3 )
-
-  # Aov_mod_om2
-  SW_omega2 <- signif(sapply(Aov_mod_om2, function(x) Shapiro_NA(residuals(x))), digits = 3 )
-    # Aov_mod_om3
-  SW_omega3 <- signif(sapply(Aov_mod_om3, function(x) Shapiro_NA(residuals(x))), digits = 3 )
-
-  # Aov_mod_nu
-  SW_nu <- signif(sapply(Aov_mod_nu, function(x) Shapiro_NA(residuals(x))), digits = 3)
-
-  # Aov_mod_M2
-  SW_M2 <- signif(sapply(Aov_mod_M2, function(x) Shapiro_NA(residuals(x))), digits = 3)
-  # Aov_mod_M3
-  SW_M3 <- signif(sapply(Aov_mod_M3, function(x) Shapiro_NA(residuals(x))), digits = 3)
-
-  # Aov_mod_phi2
-  SW_phi2 <- signif(sapply(Aov_mod_phi2, function(x) Shapiro_NA(residuals(x))), digits = 3)
-  # Aov_mod_phi3
-  SW_phi3 <- signif(sapply(Aov_mod_phi3, function(x) Shapiro_NA(residuals(x))), digits = 3)
-
-  # kable(data.frame(Model_names, SW_omega, SW_nu, SW_M, SW_phi), padding = 0)
-  
-  # SW_data <- data.frame(Model_names, SW_omega2, SW_omega3, SW_nu, SW_M2, SW_M3, SW_phi2, SW_phi3)
-  # do.call("htmlTable", c(list(SW_data), Table_options))
-  SW_data <- data.frame(Model_names, SW_sa2, SW_omega2, SW_omega3, SW_nu, SW_M2, SW_M3, SW_phi2, SW_phi3)
-  do.call("htmlTable", c(list(SW_data), Table_options))
+  # #Aov_mod_sa2
+  # SW_sa2 <- signif(sapply(Aov_mod_sa2, function(x) Shapiro_NA(residuals(x))), digits = 3 )
+  # 
+  # # Aov_mod_om2
+  # SW_omega2 <- signif(sapply(Aov_mod_om2, function(x) Shapiro_NA(residuals(x))), digits = 3 )
+  #   # Aov_mod_om3
+  # # SW_omega3 <- signif(sapply(Aov_mod_om3, function(x) Shapiro_NA(residuals(x))), digits = 3 )
+  # 
+  # # Aov_mod_nu
+  # SW_nu <- signif(sapply(Aov_mod_nu, function(x) Shapiro_NA(residuals(x))), digits = 3)
+  # 
+  # # Aov_mod_M2
+  # SW_M2 <- signif(sapply(Aov_mod_M2, function(x) Shapiro_NA(residuals(x))), digits = 3)
+  # # Aov_mod_M3
+  # # SW_M3 <- signif(sapply(Aov_mod_M3, function(x) Shapiro_NA(residuals(x))), digits = 3)
+  # 
+  # # Aov_mod_phi2
+  # SW_phi2 <- signif(sapply(Aov_mod_phi2, function(x) Shapiro_NA(residuals(x))), digits = 3)
+  # # Aov_mod_phi3
+  # # SW_phi3 <- signif(sapply(Aov_mod_phi3, function(x) Shapiro_NA(residuals(x))), digits = 3)
+  # 
+  # # kable(data.frame(Model_names, SW_omega, SW_nu, SW_M, SW_phi), padding = 0)
+  # 
+  # # SW_data <- data.frame(Model_names, SW_omega2, SW_omega3, SW_nu, SW_M2, SW_M3, SW_phi2, SW_phi3)
+  # # do.call("htmlTable", c(list(SW_data), Table_options))
+  # # SW_data <- data.frame(Model_names, SW_sa2, SW_omega2, SW_omega3, SW_nu, SW_M2, SW_M3, SW_phi2, SW_phi3)
+  #   SW_data <- data.frame(Model_names, SW_sa2, SW_omega2, SW_nu, SW_M2, SW_phi2)
+  #   
+  # do.call("htmlTable", c(list(txtRound(SW_data, 2)), Table_options))
 
 ```
 
-#### Test for homoskedasticity (homogeneity of variance)
-##### Brown-Forsyth test (uses the median - more robust to outliers)
-##### [<0.05 = VIOLATION of homogeneity of variance]
+<!-- #### Test for homoskedasticity (homogeneity of variance) -->
+<!-- ##### Brown-Forsyth test (uses the median - more robust to outliers) -->
+<!-- ##### [<0.05 = VIOLATION of homogeneity of variance] -->
 
 ```{r echo = FALSE, cache=F, results = 'asis'}
 
-  # Sa2
-  BF_sa2 <- signif(sapply(Sa2_vector, function(x) leveneTest(Sa2_vector ~ Group, data=x,  center=median)$P), digits=3)
-
-  # Om2
-  BF_omega2 <- signif(sapply(Om2_vector, function(x) leveneTest(Om2_vector ~ Group, data=x,  center=median)$P), digits=3)
-  # Om3
-  BF_omega3 <- signif(sapply(Om3_vector, function(x) leveneTest(Om3_vector ~ Group, data=x,  center=median)$P), digits=3)
-  
-  # Nu
-  BF_nu <- signif(sapply(Nu_vector, function(x) leveneTest(Nu_vector ~ Group, data=x, center=median)$P), digits = 3)
-  
-  # M2
-  BF_M2 <- signif(sapply(M2_vector, function(x) leveneTest(M2_vector ~ Group, data=x, center=median)$P), digits = 3)
-  # M3
-  BF_M3 <- signif(sapply(M3_vector, function(x) leveneTest(M3_vector ~ Group, data=x, center=median)$P), digits = 3)
-  
-  # Phi2
-  BF_phi2 <- signif(sapply(Phi2_vector, function(x) leveneTest(Phi2_vector ~ Group, data=x, center=median)$P), digits = 3)
-  # Phi3
-  BF_phi3 <- signif(sapply(Phi3_vector, function(x) leveneTest(Phi3_vector ~ Group, data=x, center=median)$P), digits = 3)
-  
-  # Clean:
-  BF_sa2 <- BF_sa2[!is.na(BF_sa2) | is.nan(BF_sa2)]
-  BF_omega2 <- BF_omega2[!is.na(BF_omega2) | is.nan(BF_omega2)]
-  BF_omega3 <- BF_omega3[!is.na(BF_omega3) | is.nan(BF_omega3)]
-  BF_nu <- BF_nu[!is.na(BF_nu) | is.nan(BF_nu)]
-  BF_M2 <- BF_M2[!is.na(BF_M2) | is.nan(BF_M2)]
-  BF_M3 <- BF_M3[!is.na(BF_M3) | is.nan(BF_M3)]
-  BF_phi2 <- BF_phi2[!is.na(BF_phi2) | is.nan(BF_phi2)]
-  BF_phi3 <- BF_phi3[!is.na(BF_phi3) | is.nan(BF_phi3)]
-  
-  # BF_data <- data.frame(Model_names, BF_omega2, BF_omega3, BF_nu, BF_M2, BF_M3, BF_phi2, BF_phi3)
-  BF_data <- data.frame(Model_names, BF_sa2, BF_omega2, BF_omega3, BF_nu, BF_M2, BF_M3, BF_phi2, BF_phi3)
-  
-  do.call("htmlTable", c(list(BF_data), Table_options))
-  
+  # # Sa2
+  # BF_sa2 <- signif(sapply(Sa2_vector, function(x) leveneTest(Sa2_vector ~ Group, data=x,  center=median)$P), digits=3)
+  # 
+  # # Om2
+  # BF_omega2 <- signif(sapply(Om2_vector, function(x) leveneTest(Om2_vector ~ Group, data=x,  center=median)$P), digits=3)
+  # # Om3
+  # # BF_omega3 <- signif(sapply(Om3_vector, function(x) leveneTest(Om3_vector ~ Group, data=x,  center=median)$P), digits=3)
+  # 
+  # # Nu
+  # BF_nu <- signif(sapply(Nu_vector, function(x) leveneTest(Nu_vector ~ Group, data=x, center=median)$P), digits = 3)
+  # 
+  # # M2
+  # BF_M2 <- signif(sapply(M2_vector, function(x) leveneTest(M2_vector ~ Group, data=x, center=median)$P), digits = 3)
+  # # M3
+  # # BF_M3 <- signif(sapply(M3_vector, function(x) leveneTest(M3_vector ~ Group, data=x, center=median)$P), digits = 3)
+  # 
+  # # Phi2
+  # BF_phi2 <- signif(sapply(Phi2_vector, function(x) leveneTest(Phi2_vector ~ Group, data=x, center=median)$P), digits = 3)
+  # # Phi3
+  # # BF_phi3 <- signif(sapply(Phi3_vector, function(x) leveneTest(Phi3_vector ~ Group, data=x, center=median)$P), digits = 3)
+  # 
+  # # Clean:
+  # BF_sa2 <- BF_sa2[!is.na(BF_sa2) | is.nan(BF_sa2)]
+  # BF_omega2 <- BF_omega2[!is.na(BF_omega2) | is.nan(BF_omega2)]
+  # # BF_omega3 <- BF_omega3[!is.na(BF_omega3) | is.nan(BF_omega3)]
+  # BF_nu <- BF_nu[!is.na(BF_nu) | is.nan(BF_nu)]
+  # BF_M2 <- BF_M2[!is.na(BF_M2) | is.nan(BF_M2)]
+  # # BF_M3 <- BF_M3[!is.na(BF_M3) | is.nan(BF_M3)]
+  # BF_phi2 <- BF_phi2[!is.na(BF_phi2) | is.nan(BF_phi2)]
+  # # BF_phi3 <- BF_phi3[!is.na(BF_phi3) | is.nan(BF_phi3)]
+  # 
+  # # BF_data <- data.frame(Model_names, BF_omega2, BF_omega3, BF_nu, BF_M2, BF_M3, BF_phi2, BF_phi3)
+  # # BF_data <- data.frame(Model_names, BF_sa2, BF_omega2, BF_omega3, BF_nu, BF_M2, BF_M3, BF_phi2, BF_phi3)
+  #   BF_data <- data.frame(Model_names, BF_sa2, BF_omega2, BF_nu, BF_M2, BF_phi2)
+  # 
+  # do.call("htmlTable", c(list(BF_data), Table_options))
+  # 
 ```
 
-**-------------------------------------------------------------------------------------------**
+<!-- **-------------------------------------------------------------------------------------------** -->
 
-### **Fit - beads of opposite colour (BOOC) for selected analyses**
+<!-- ### **Fit - beads of opposite colour (BOOC) for selected analyses** -->
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
 
-  if (Do_stats == TRUE){ 
-#     message("FIT (BOOC)")
-#     Dummy_var <- sapply(seq_along(Fit_BOOC_whole_model), function(i) 
-#       c(message(sprintf("Fit BOOC for whole analysis %d:", Analyses_nos[i])),
-#         print(Fit_BOOC_whole_model[[i]])))
-    
-   BOOC_data <- data.frame("Analysis_no."=Model_names, 
-                           "Fit_BOOC"=signif(unlist(Fit_BOOC_whole_model), digits=3))
-   do.call("htmlTable", c(list(BOOC_data), Table_options))
-  } # if (Do_stats == TRUE)
+#   if (Do_stats == TRUE){ 
+# #     message("FIT (BOOC)")
+# #     Dummy_var <- sapply(seq_along(Fit_BOOC_whole_model), function(i) 
+# #       c(message(sprintf("Fit BOOC for whole analysis %d:", Analyses_nos[i])),
+# #         print(Fit_BOOC_whole_model[[i]])))
+#     
+#    BOOC_data <- data.frame("Analysis_no."=Model_names, 
+#                            "Fit_BOOC"=signif(unlist(Fit_BOOC_whole_model), digits=3))
+#    do.call("htmlTable", c(list(BOOC_data), Table_options))
+#   } # if (Do_stats == TRUE)
+
 ```
 
-**-------------------------------------------------------------------------------------------**
+<!-- **-------------------------------------------------------------------------------------------** -->
 
 ### **Means, SDs, ANOVA summaries and post-hoc tests**
 
@@ -534,14 +552,14 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
           ), digits = 3  ) ) # rbind, data.frame, signif
     }),  setNames, Col_names))
   
-    # OMEGA3
-    Om3_mean_sd <- do.call("rbind", lapply( lapply_mod(Aov_mod_om3, function(i){
-     data.frame(signif(rbind(
-          c(mean(Om3_vector[[i]]$Om3_vector[Ctrl]), sd(Om3_vector[[i]]$Om3_vector[Ctrl])), 
-          c(mean(Om3_vector[[i]]$Om3_vector[Pat]), sd(Om3_vector[[i]]$Om3_vector[Pat])),  
-          c(mean(Om3_vector[[i]]$Om3_vector[Psych_ctrl]), sd(Om3_vector[[i]]$Om3_vector[Psych_ctrl])) 
-          ), digits = 3  ) ) # rbind, data.frame, signif
-    }),  setNames, Col_names))
+    # # OMEGA3
+    # Om3_mean_sd <- do.call("rbind", lapply( lapply_mod(Aov_mod_om3, function(i){
+    #  data.frame(signif(rbind(
+    #       c(mean(Om3_vector[[i]]$Om3_vector[Ctrl]), sd(Om3_vector[[i]]$Om3_vector[Ctrl])), 
+    #       c(mean(Om3_vector[[i]]$Om3_vector[Pat]), sd(Om3_vector[[i]]$Om3_vector[Pat])),  
+    #       c(mean(Om3_vector[[i]]$Om3_vector[Psych_ctrl]), sd(Om3_vector[[i]]$Om3_vector[Psych_ctrl])) 
+    #       ), digits = 3  ) ) # rbind, data.frame, signif
+    # }),  setNames, Col_names))
   
     # NU
     # Mean/sd groups
@@ -562,14 +580,14 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
             c(mean(M2_vector[[i]]$M2_vector[Psych_ctrl]), sd(M2_vector[[i]]$M2_vector[Psych_ctrl]))
             ), digits=3))
     }),  setNames, Col_names))
-    # M3
-    M3_mean_sd <- do.call("rbind", lapply( lapply_mod(Aov_mod_M3, function(i){
-    data.frame(signif(rbind(
-            c(mean(M3_vector[[i]]$M3_vector[Ctrl]), sd(M3_vector[[i]]$M3_vector[Ctrl])), 
-            c(mean(M3_vector[[i]]$M3_vector[Pat]), sd(M3_vector[[i]]$M3_vector[Pat])), 
-            c(mean(M3_vector[[i]]$M3_vector[Psych_ctrl]), sd(M3_vector[[i]]$M3_vector[Psych_ctrl]))
-            ), digits=3))
-    }),  setNames, Col_names))
+    # # M3
+    # M3_mean_sd <- do.call("rbind", lapply( lapply_mod(Aov_mod_M3, function(i){
+    # data.frame(signif(rbind(
+    #         c(mean(M3_vector[[i]]$M3_vector[Ctrl]), sd(M3_vector[[i]]$M3_vector[Ctrl])), 
+    #         c(mean(M3_vector[[i]]$M3_vector[Pat]), sd(M3_vector[[i]]$M3_vector[Pat])), 
+    #         c(mean(M3_vector[[i]]$M3_vector[Psych_ctrl]), sd(M3_vector[[i]]$M3_vector[Psych_ctrl]))
+    #         ), digits=3))
+    # }),  setNames, Col_names))
     
     # PHI2
     # Mean / sd groups
@@ -581,18 +599,19 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
             ), digits=3))
     }), setNames, Col_names))
     # PHI3
-    # Mean / sd groups
-    Phi3_mean_sd <- do.call("rbind", lapply( lapply_mod(Aov_mod_phi3, function(i){
-      data.frame(signif(rbind(
-            c(mean(Phi3_vector[[i]]$Phi3_vector[Ctrl]), sd(Phi3_vector[[i]]$Phi3_vector[Ctrl])), 
-            c(mean(Phi3_vector[[i]]$Phi3_vector[Pat]), sd(Phi3_vector[[i]]$Phi3_vector[Pat])),
-            c(mean(Phi3_vector[[i]]$Phi3_vector[Psych_ctrl]), sd(Phi3_vector[[i]]$Phi3_vector[Psych_ctrl]))
-            ), digits=3))
-    }), setNames, Col_names))
+    # # Mean / sd groups
+    # Phi3_mean_sd <- do.call("rbind", lapply( lapply_mod(Aov_mod_phi3, function(i){
+    #   data.frame(signif(rbind(
+    #         c(mean(Phi3_vector[[i]]$Phi3_vector[Ctrl]), sd(Phi3_vector[[i]]$Phi3_vector[Ctrl])), 
+    #         c(mean(Phi3_vector[[i]]$Phi3_vector[Pat]), sd(Phi3_vector[[i]]$Phi3_vector[Pat])),
+    #         c(mean(Phi3_vector[[i]]$Phi3_vector[Psych_ctrl]), sd(Phi3_vector[[i]]$Phi3_vector[Psych_ctrl]))
+    #         ), digits=3))
+    # }), setNames, Col_names))
     
     # Bring all means, SDs together
     # Mean_sd <- cbind(Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
-    Mean_sd <- cbind(Sa2_mean_sd, Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
+    # Mean_sd <- cbind(Sa2_mean_sd, Om2_mean_sd, Om3_mean_sd, Nu_mean_sd, M2_mean_sd, M3_mean_sd, Phi2_mean_sd, Phi3_mean_sd)
+    Mean_sd <- cbind(Sa2_mean_sd, Om2_mean_sd, Nu_mean_sd, M2_mean_sd, Phi2_mean_sd)
   
   htmlTable(Mean_sd,
             rnames=rep(Group_names, N_analyses), 
@@ -601,15 +620,12 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
             cgroup = Parameter_names, 
             n.cgroup= rep(2, N_parameters), 
             align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", "none", Blue, Blue))
+  
 ```
 
 #### ANOVA model summaries table
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
-
-###################################################
-########## GOT TO HERE WITH SA2 ADDITION ##########
-###################################################
 
   # Sa2
   Sa2_anova <- lapply_mod(Aov_mod_sa2, function(i){summary(Aov_mod_sa2[[i]])})
@@ -632,16 +648,16 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
   colnames(Om2_anova_df) <- Col_names
   rownames(Om2_anova_df) <- Model_names
   Om2_anova_df <- signif(Om2_anova_df, digits = 2)
-  # Omega3
-  Om3_anova <- lapply_mod(Aov_mod_om3, function(i){summary(Aov_mod_om3[[i]])})
-  Om3_anova_df <- do.call("rbind", sapply(Om3_anova, function(x) lapply(x, data.frame)))
-  Df <- unique(Om3_anova_df$Df)
-  Col_names <- c(sprintf("F(%g,%g)",Df[1], Df[2]), "p")
-  Om3_anova_df <- dplyr::select(Om3_anova_df, -(Df:Mean.Sq))
-  Om3_anova_df <- Om3_anova_df[-c(seq(2, nrow(Om3_anova_df), 2)),]
-  colnames(Om3_anova_df) <- Col_names
-  rownames(Om3_anova_df) <- Model_names
-  Om3_anova_df <- signif(Om3_anova_df, digits = 2)
+  # # Omega3
+  # Om3_anova <- lapply_mod(Aov_mod_om3, function(i){summary(Aov_mod_om3[[i]])})
+  # Om3_anova_df <- do.call("rbind", sapply(Om3_anova, function(x) lapply(x, data.frame)))
+  # Df <- unique(Om3_anova_df$Df)
+  # Col_names <- c(sprintf("F(%g,%g)",Df[1], Df[2]), "p")
+  # Om3_anova_df <- dplyr::select(Om3_anova_df, -(Df:Mean.Sq))
+  # Om3_anova_df <- Om3_anova_df[-c(seq(2, nrow(Om3_anova_df), 2)),]
+  # colnames(Om3_anova_df) <- Col_names
+  # rownames(Om3_anova_df) <- Model_names
+  # Om3_anova_df <- signif(Om3_anova_df, digits = 2)
   
   # Nu
   Nu_anova <- lapply_mod(Aov_mod_nu, function(i){summary(Aov_mod_nu[[i]])})
@@ -661,14 +677,14 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
   rownames(M2_anova_df) <- Model_names
   M2_anova_df <- signif(M2_anova_df, digits = 2)
   # M3
-  M3_anova <- lapply_mod(Aov_mod_M3, function(i){summary(Aov_mod_M3[[i]])})
-  M3_anova_df <- do.call("rbind", sapply(M3_anova, function(x) lapply(x, data.frame)))
-  M3_anova_df <- dplyr::select(M3_anova_df, -(Df:Mean.Sq))
-  M3_anova_df <- M3_anova_df[-c(seq(2, nrow(M3_anova_df), 2)),]
-  colnames(M3_anova_df) <- Col_names
-  rownames(M3_anova_df) <- Model_names
-  M3_anova_df <- signif(M3_anova_df, digits = 2)
-  
+  # M3_anova <- lapply_mod(Aov_mod_M3, function(i){summary(Aov_mod_M3[[i]])})
+  # M3_anova_df <- do.call("rbind", sapply(M3_anova, function(x) lapply(x, data.frame)))
+  # M3_anova_df <- dplyr::select(M3_anova_df, -(Df:Mean.Sq))
+  # M3_anova_df <- M3_anova_df[-c(seq(2, nrow(M3_anova_df), 2)),]
+  # colnames(M3_anova_df) <- Col_names
+  # rownames(M3_anova_df) <- Model_names
+  # M3_anova_df <- signif(M3_anova_df, digits = 2)
+  # 
   # Phi2
   Phi2_anova <- lapply_mod(Aov_mod_phi2, function(i){summary(Aov_mod_phi2[[i]])})
   Phi2_anova_df <- do.call("rbind", sapply(Phi2_anova, function(x) lapply(x, data.frame)))
@@ -678,16 +694,17 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
   rownames(Phi2_anova_df) <- Model_names
   Phi2_anova_df <- signif(Phi2_anova_df, digits = 2)
   # Phi3
-  Phi3_anova <- lapply_mod(Aov_mod_phi3, function(i){summary(Aov_mod_phi3[[i]])})
-  Phi3_anova_df <- do.call("rbind", sapply(Phi3_anova, function(x) lapply(x, data.frame)))
-  Phi3_anova_df <- dplyr::select(Phi3_anova_df, -(Df:Mean.Sq))
-  Phi3_anova_df <- Phi3_anova_df[-c(seq(2, nrow(Phi3_anova_df), 2)),]
-  colnames(Phi3_anova_df) <- Col_names
-  rownames(Phi3_anova_df) <- Model_names
-  Phi3_anova_df <- signif(Phi3_anova_df, digits = 2)
+  # Phi3_anova <- lapply_mod(Aov_mod_phi3, function(i){summary(Aov_mod_phi3[[i]])})
+  # Phi3_anova_df <- do.call("rbind", sapply(Phi3_anova, function(x) lapply(x, data.frame)))
+  # Phi3_anova_df <- dplyr::select(Phi3_anova_df, -(Df:Mean.Sq))
+  # Phi3_anova_df <- Phi3_anova_df[-c(seq(2, nrow(Phi3_anova_df), 2)),]
+  # colnames(Phi3_anova_df) <- Col_names
+  # rownames(Phi3_anova_df) <- Model_names
+  # Phi3_anova_df <- signif(Phi3_anova_df, digits = 2)
 
   # Anova_table <- cbind(Om2_anova_df, Om3_anova_df, Nu_anova_df, M2_anova_df, M3_anova_df, Phi2_anova_df, Phi3_anova_df)
-    Anova_table <- cbind(Sa2_anova_df, Om2_anova_df, Om3_anova_df, Nu_anova_df, M2_anova_df, M3_anova_df, Phi2_anova_df, Phi3_anova_df)
+    # Anova_table <- cbind(Sa2_anova_df, Om2_anova_df, Om3_anova_df, Nu_anova_df, M2_anova_df, M3_anova_df, Phi2_anova_df, Phi3_anova_df)
+    Anova_table <- cbind(Sa2_anova_df, Om2_anova_df, Nu_anova_df, M2_anova_df, Phi2_anova_df)
   
   htmlTable(Anova_table, 
             cgroup = Parameter_names, 
@@ -712,9 +729,9 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
     rownames(Post_hoc_om2) <- NULL
     Post_hoc_om2 <- dplyr::select(Post_hoc_om2, p.adj)
     # Om3
-    Post_hoc_om3 <- do.call("rbind", Post_hoc_om3)
-    rownames(Post_hoc_om3) <- NULL
-    Post_hoc_om3 <- dplyr::select(Post_hoc_om3, p.adj)
+    # Post_hoc_om3 <- do.call("rbind", Post_hoc_om3)
+    # rownames(Post_hoc_om3) <- NULL
+    # Post_hoc_om3 <- dplyr::select(Post_hoc_om3, p.adj)
 
     # Nu
     Post_hoc_nu <- do.call("rbind", Post_hoc_nu)
@@ -726,21 +743,22 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
     rownames(Post_hoc_M2) <- NULL
     Post_hoc_M2 <- dplyr::select(Post_hoc_M2, p.adj)
     # M3
-    Post_hoc_M3 <- do.call("rbind", Post_hoc_M3)
-    rownames(Post_hoc_M3) <- NULL
-    Post_hoc_M3 <- dplyr::select(Post_hoc_M3, p.adj)
+    # Post_hoc_M3 <- do.call("rbind", Post_hoc_M3)
+    # rownames(Post_hoc_M3) <- NULL
+    # Post_hoc_M3 <- dplyr::select(Post_hoc_M3, p.adj)
     
     # Phi2
     Post_hoc_phi2 <- do.call("rbind", Post_hoc_phi2)
     rownames(Post_hoc_phi2) <- NULL
     Post_hoc_phi2 <- dplyr::select(Post_hoc_phi2, p.adj)
     # Phi3
-    Post_hoc_phi3 <- do.call("rbind", Post_hoc_phi3)
-    rownames(Post_hoc_phi3) <- NULL
-    Post_hoc_phi3 <- dplyr::select(Post_hoc_phi3, p.adj)
+    # Post_hoc_phi3 <- do.call("rbind", Post_hoc_phi3)
+    # rownames(Post_hoc_phi3) <- NULL
+    # Post_hoc_phi3 <- dplyr::select(Post_hoc_phi3, p.adj)
     
     # Post_hoc_table <- cbind(Post_hoc_om2, Post_hoc_om3, Post_hoc_nu, Post_hoc_M2, Post_hoc_M3, Post_hoc_phi2, Post_hoc_phi3)
-    Post_hoc_table <- cbind(Post_hoc_sa2, Post_hoc_om2, Post_hoc_om3, Post_hoc_nu, Post_hoc_M2, Post_hoc_M3, Post_hoc_phi2, Post_hoc_phi3)
+    # Post_hoc_table <- cbind(Post_hoc_sa2, Post_hoc_om2, Post_hoc_om3, Post_hoc_nu, Post_hoc_M2, Post_hoc_M3, Post_hoc_phi2, Post_hoc_phi3)
+    Post_hoc_table <- cbind(Post_hoc_sa2, Post_hoc_om2, Post_hoc_nu, Post_hoc_M2, Post_hoc_phi2)
     
     Post_hoc_table <- signif(Post_hoc_table, digits = 2)
     
@@ -754,12 +772,13 @@ Post_hoc_df[[i]] <- cbind(rbind(Post_hoc_sa2[[i]], Post_hoc_om2[[i]], Post_hoc_o
     
 ```    
 
-#### Parametric effect sizes (eta-squared)
+#### Anova effect sizes (eta-squared)
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
   
 # Effect_size <- c(Aov_mod_om2, Aov_mod_om3, Aov_mod_nu, Aov_mod_M2, Aov_mod_M3, Aov_mod_phi2, Aov_mod_phi3)
-Effect_size <- c(Aov_mod_sa2, Aov_mod_om2, Aov_mod_om3, Aov_mod_nu, Aov_mod_M2, Aov_mod_M3, Aov_mod_phi2, Aov_mod_phi3)
+# Effect_size <- c(Aov_mod_sa2, Aov_mod_om2, Aov_mod_om3, Aov_mod_nu, Aov_mod_M2, Aov_mod_M3, Aov_mod_phi2, Aov_mod_phi3)
+Effect_size <- c(Aov_mod_sa2, Aov_mod_om2, Aov_mod_nu, Aov_mod_M2, Aov_mod_phi2)
 Effect_size <- lapply(Effect_size, etaSquared)
 Effect_size <- sapply(seq(Effect_size), function(i) data.frame(Effect_size[[i]]))
 Effect_size <- signif(unlist(Effect_size["eta.sq",]), digits=2)
@@ -773,208 +792,218 @@ htmlTable(Effect_size,
 
 ```   
 
-**-------------------------------------------------------------------------------------------**
+<!-- **-------------------------------------------------------------------------------------------** -->
 
-#### Non-parametric tests (Kruskal-Wallis)
+<!-- #### Non-parametric tests (Kruskal-Wallis) -->
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
     
-# Sa2 K-W
-    Sa2_KW <- lapply_mod(Sa2_vector, function(i)tryCatch({dunn.test(Sa2_vector[[i]]$Sa2_vector, 
-                                      g = Sa2_vector[[i]]$Group, 
-                                      method = "holm", table = FALSE, list = FALSE, kw=FALSE)
-                          },error=function(e){NA})
-                      ) # lapply_mod
-
-    # Om2 K-W
-    Om2_KW <- lapply_mod(Om2_vector, function(i)tryCatch({dunn.test(Om2_vector[[i]]$Om2_vector, 
-                                      g = Om2_vector[[i]]$Group, 
-                                      method = "holm", table = FALSE, list = FALSE, kw=FALSE)
-                          },error=function(e){NA})
-                      ) # lapply_mod
-    # Om3 K-W
-    Om3_KW <- lapply_mod(Om3_vector, function(i)tryCatch({dunn.test(Om3_vector[[i]]$Om3_vector, 
-                                      g = Om3_vector[[i]]$Group, 
-                                      method = "holm", table = FALSE, list = FALSE, kw=FALSE)
-                          },error=function(e){NA})
-                      ) # lapply_mod
-
-    # Nu K-W
-    Nu_KW <- lapply_mod(Nu_vector, function(i) tryCatch({dunn.test(Nu_vector[[i]]$Nu_vector, 
-                                      g = Nu_vector[[i]]$Group, 
-                                      method = "holm", table = FALSE, list = FALSE, kw=FALSE)
-                          },error=function(e){NA})
-                       ) # lapply_mod
-    
-    # M2 K-W
-    M2_KW <- lapply_mod(M2_vector, function(i)tryCatch({dunn.test(M2_vector[[i]]$M2_vector, 
-                                     g = M2_vector[[i]]$Group, 
-                                     method = "holm", table = FALSE, list = FALSE, kw=FALSE)
-                          },error=function(e){NA})
-                       ) # lapply_mod
-    # M3 K-W
-    M3_KW <- lapply_mod(M3_vector, function(i)tryCatch({dunn.test(M3_vector[[i]]$M3_vector, 
-                                     g = M3_vector[[i]]$Group, 
-                                     method = "holm", table = FALSE, list = FALSE, kw=FALSE)
-                          },error=function(e){NA})
-                       ) # lapply_mod
-    
-    # Phi2 K-W
-    Phi2_KW <- lapply_mod(Phi2_vector, function(i)tryCatch({dunn.test(Phi2_vector[[i]]$Phi2_vector,
-                                       g = Phi2_vector[[i]]$Group, 
-                                       method = "holm", table = FALSE, list = FALSE, kw=FALSE)
-                           },error=function(e){NA})
-                        ) # lapply_mod
-    # Phi3 K-W
-    Phi3_KW <- lapply_mod(Phi3_vector, function(i)tryCatch({dunn.test(Phi3_vector[[i]]$Phi3_vector,
-                                       g = Phi3_vector[[i]]$Group, 
-                                       method = "holm", table = FALSE, list = FALSE, kw=FALSE)
-                           },error=function(e){NA})
-                        ) # lapply_mod
-
-      # Chi_sq <- signif(unlist(mapply(function(x) {x[[1]]}, x = c(Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW) ) ), digits=3)
-Chi_sq <- signif(unlist(mapply(function(x) {x[[1]]}, x = c(Sa2_KW, Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW) ) ), digits=3)
-      dim(Chi_sq) <- c(N_analyses, N_parameters)
-      P_vals <- signif(1 - pchisq(Chi_sq, N_groups-1), digits = 2)
-      Chi_p <- data.frame(Interleave_cols(Chi_sq, P_vals))
-      Col_names_chi_p <- rep(c(sprintf("Chi sq(%g, n=%g)",Df[1], N_subjects), "p"), ncol(Chi_p)/2)
-      colnames(Chi_p) <- Col_names_chi_p
-      rownames(Chi_p) <- Model_names
-      
-      htmlTable(Chi_p, 
-            cgroup = Parameter_names, 
-            n.cgroup= rep(2, N_parameters), 
-            align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", "none", Blue, Blue))
+# # Sa2 K-W
+#     Sa2_KW <- lapply_mod(Sa2_vector, function(i)tryCatch({dunn.test(Sa2_vector[[i]]$Sa2_vector, 
+#                                       g = Sa2_vector[[i]]$Group, 
+#                                       method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+#                           },error=function(e){NA})
+#                       ) # lapply_mod
+# 
+#     # Om2 K-W
+#     Om2_KW <- lapply_mod(Om2_vector, function(i)tryCatch({dunn.test(Om2_vector[[i]]$Om2_vector, 
+#                                       g = Om2_vector[[i]]$Group, 
+#                                       method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+#                           },error=function(e){NA})
+#                       ) # lapply_mod
+#     # Om3 K-W
+#     # Om3_KW <- lapply_mod(Om3_vector, function(i)tryCatch({dunn.test(Om3_vector[[i]]$Om3_vector, 
+#     #                                   g = Om3_vector[[i]]$Group, 
+#     #                                   method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+#     #                       },error=function(e){NA})
+#     #                   ) # lapply_mod
+# 
+#     # Nu K-W
+#     Nu_KW <- lapply_mod(Nu_vector, function(i) tryCatch({dunn.test(Nu_vector[[i]]$Nu_vector, 
+#                                       g = Nu_vector[[i]]$Group, 
+#                                       method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+#                           },error=function(e){NA})
+#                        ) # lapply_mod
+#     
+#     # M2 K-W
+#     M2_KW <- lapply_mod(M2_vector, function(i)tryCatch({dunn.test(M2_vector[[i]]$M2_vector, 
+#                                      g = M2_vector[[i]]$Group, 
+#                                      method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+#                           },error=function(e){NA})
+#                        ) # lapply_mod
+#     # M3 K-W
+#     # M3_KW <- lapply_mod(M3_vector, function(i)tryCatch({dunn.test(M3_vector[[i]]$M3_vector, 
+#     #                                  g = M3_vector[[i]]$Group, 
+#     #                                  method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+#     #                       },error=function(e){NA})
+#     #                    ) # lapply_mod
+#     # 
+#     # Phi2 K-W
+#     Phi2_KW <- lapply_mod(Phi2_vector, function(i)tryCatch({dunn.test(Phi2_vector[[i]]$Phi2_vector,
+#                                        g = Phi2_vector[[i]]$Group, 
+#                                        method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+#                            },error=function(e){NA})
+#                         ) # lapply_mod
+#     # Phi3 K-W
+#     # Phi3_KW <- lapply_mod(Phi3_vector, function(i)tryCatch({dunn.test(Phi3_vector[[i]]$Phi3_vector,
+#     #                                    g = Phi3_vector[[i]]$Group, 
+#     #                                    method = "holm", table = FALSE, list = FALSE, kw=FALSE)
+#     #                        },error=function(e){NA})
+#     #                     ) # lapply_mod
+# 
+#       # Chi_sq <- signif(unlist(mapply(function(x) {x[[1]]}, x = c(Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW) ) ), digits=3)
+# # Chi_sq <- signif(unlist(mapply(function(x) {x[[1]]}, x = c(Sa2_KW, Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW) ) ), digits=3)
+# Chi_sq <- signif(unlist(mapply(function(x) 
+#   {x[[1]]}, 
+#   x = c(Sa2_KW, Om2_KW, Nu_KW, M2_KW, Phi2_KW) ) ), digits=3)
+# 
+#       dim(Chi_sq) <- c(N_analyses, N_parameters)
+#       P_vals <- signif(1 - pchisq(Chi_sq, N_groups-1), digits = 2)
+#       Chi_p <- data.frame(Interleave_cols(Chi_sq, P_vals))
+#       Col_names_chi_p <- rep(c(sprintf("Chi sq(%g, n=%g)",Df[1], N_subjects), "p"), ncol(Chi_p)/2)
+#       colnames(Chi_p) <- Col_names_chi_p
+#       rownames(Chi_p) <- Model_names
+#       
+#       htmlTable(Chi_p, 
+#             cgroup = Parameter_names, 
+#             n.cgroup= rep(2, N_parameters), 
+#             align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", "none", Blue, Blue))
       
 ```
 
-#### Post-hoc non-parametric tests (Dunn test)
+<!-- #### Post-hoc non-parametric tests (Dunn test) -->
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
       
 # All_KW <- c(Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW)
-All_KW <- c(Sa2_KW, Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW)
-
-Post_hoc_table <- sapply(seq(All_KW), function(i) rbind(All_KW[[i]]["P.adjusted"]))
-yes <- rep(NA, N_groups)
-Post_hoc_table <- signif(unlist(lapply(Post_hoc_table, function(x) if(is.na(x)){yes} else {x})), digits=2)
-dim(Post_hoc_table) <- c((N_analyses*N_groups), N_parameters)
-
-        htmlTable(Post_hoc_table,
-          rnames=rep(Comparisons, N_analyses), 
-          rgroup = Model_names, 
-          n.rgroup=rep(N_groups, N_analyses) , 
-          cgroup = Parameter_names, 
-          n.cgroup= rep(1, N_parameters), 
-          align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", Blue))
+# All_KW <- c(Sa2_KW, Om2_KW, Om3_KW, Nu_KW, M2_KW, M3_KW, Phi2_KW, Phi3_KW)
+# All_KW <- c(Sa2_KW, Om2_KW, Nu_KW, M2_KW, Phi2_KW)
+# 
+# Post_hoc_table <- sapply(seq(All_KW), function(i) rbind(All_KW[[i]]["P.adjusted"]))
+# yes <- rep(NA, N_groups)
+# Post_hoc_table <- signif(unlist(lapply(Post_hoc_table, function(x) if(is.na(x)){yes} else {x})), digits=2)
+# dim(Post_hoc_table) <- c((N_analyses*N_groups), N_parameters)
+# 
+#         htmlTable(Post_hoc_table,
+#           rnames=rep(Comparisons, N_analyses), 
+#           rgroup = Model_names, 
+#           n.rgroup=rep(N_groups, N_analyses) , 
+#           cgroup = Parameter_names, 
+#           n.cgroup= rep(1, N_parameters), 
+#           align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", Blue))
 
 ```
 
-#### Non-parametric effect sizes
-##### (Eta-squared = Kruskal-Wallis Chi-sq statistic / N-1)
+<!-- #### Non-parametric effect sizes -->
+<!-- ##### (Eta-squared = Kruskal-Wallis Chi-sq statistic / N-1) -->
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
 
-
-Specify_decimal <- function(x, k) format(round(x, k), nsmall=k)
-        
-Effect_nonpara <- signif(Eta_sq_nonpara(Chi_sq, N_subjects), digits=3)
-rownames(Effect_nonpara) <- Model_names
-
-htmlTable(Effect_nonpara, 
-      cgroup = Parameter_names, 
-      n.cgroup= rep(1, N_parameters), 
-      align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", Blue))
+# Specify_decimal <- function(x, k) format(round(x, k), nsmall=k)
+#         
+# Effect_nonpara <- signif(Eta_sq_nonpara(Chi_sq, N_subjects), digits=3)
+# rownames(Effect_nonpara) <- Model_names
+# 
+# htmlTable(Effect_nonpara, 
+#       cgroup = Parameter_names, 
+#       n.cgroup= rep(1, N_parameters), 
+#       align = c("c", "|"), align.header=c("c", "|"), col.columns=c("none", Blue))
         
 ```    
 
-**-------------------------------------------------------------------------------------------**
+<!-- **-------------------------------------------------------------------------------------------** -->
+<!-- For selected subjects - to pass to subject trajectory plots -->
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
 #---------------------------------------------------------------
 # For selected subjects - to pass to subject trajectory plots
 #---------------------------------------------------------------
 
-# DONE
-# Subset Beads, Responses & Predictions by selected analyses and subjects
-Beads_selected <- lapply(Beads, function(x) lapply(x[Subjects], function(x) data.frame(Beads=x)))
-Responses_selected <- lapply(Responses, function(x) lapply(x[Subjects], function(x) data.frame(Responses=x)))
-Predictions_selected <- lapply(Predictions, function(x) lapply(x[Subjects], function(x) data.frame(Predictions=x)))
-Learning_rate_selected <- lapply(Learning_rate, function(x) lapply(x[Subjects], function(x) data.frame(LR=x)))
+# # DONE
+# # Subset Beads, Responses & Predictions by selected analyses and subjects
+# Beads_selected <- lapply(Beads, function(x) lapply(x[Subjects], function(x) data.frame(Beads=x)))
+# Responses_selected <- lapply(Responses, function(x) lapply(x[Subjects], function(x) data.frame(Responses=x)))
+# Predictions_selected <- lapply(Predictions, function(x) lapply(x[Subjects], function(x) data.frame(Predictions=x)))
+# Learning_rate_selected <- lapply(Learning_rate, function(x) lapply(x[Subjects], function(x) data.frame(LR=x)))
+# 
+# # x-axes must be from 0 to length of Predictions (for each analysis) in order 
+# # to align with the responses
+# x_axes <- vector("list", length(Predictions_selected))
+# x_axes <- lapply(seq_along(x_axes),
+#                  function(i) 
+#                    data.frame(Index = 0:(length("[["(Predictions_selected[[i]][[1]], 1))-1)))
 
-# x-axes must be from 0 to length of Predictions (for each analysis) in order 
-# to align with the responses
-x_axes <- vector("list", length(Predictions_selected))
-x_axes <- lapply(seq_along(x_axes),
-                 function(i) 
-                   data.frame(Index = 0:(length("[["(Predictions_selected[[i]][[1]], 1))-1)))
 ```
+
+***
 ### **Plots**
+
+<!-- Plot selected subject(s) response trajectory -->
 
 `r if(Plot_subj)'##### Selected subject(s) response trajectory'`
 
 ```{r echo = FALSE, results = 'asis', warning=FALSE, message=FALSE, cache=F}
         
-# ------------------------------------------------------
-# Plot selected subject(s) response trajectory
-# ------------------------------------------------------
-# Set the default theme
-theme_set(theme_grey())
-
-if (Plot_subj == TRUE){
-        
-for (i in seq_along(Analyses_nos)){
-  for (j in seq_along(Subjects)){
-      
-    # tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
-      print(ggplot()+
-              geom_line(data=Predictions_selected[[i]][[j]],
-                        aes(x=x_axes[[i]]$Index, y=Predictions, colour="Predictions"), 
-                        size=1.2, alpha = 0.6, colour="red") +
-              
-              geom_point(data=Beads_selected[[i]][[j]],
-                         aes(x=1:nrow(Beads_selected[[i]][[j]]), y=Beads, colour=factor(Beads)),
-                         size=3, show.legend = FALSE) + 
-              
-              geom_point(data=Responses_selected[[i]][[j]], 
-                         aes(x=1:nrow(Responses_selected[[i]][[j]]), y=Responses),
-                         size=1.5, show.legend = FALSE) +
-              
-              # Plot learning rate for AR1 models     
-             {if (!(length(Learning_rate) == 0) & Analyses_nos[i] > 10){
-               geom_line(aes(x=1:nrow(Learning_rate_selected[[i]][[j]]), y=LR, colour="Learning rate"), 
-                         size=1, colour = "cornflowerblue", data=Learning_rate_selected[[i]][[j]])}}+
-              
-              theme(legend.position="bottom")+
-              
-              xlab("Bead index")+
-              ylab("Responses (jar probability estimate)")+
-              scale_x_continuous(breaks = seq(0, length(x_axes[[i]][[1]]), 1))+
-              coord_cartesian(ylim=c(0,1))+
-              scale_y_continuous(breaks = seq(0, 1, 0.1))+
-              
-              ggtitle(paste(sprintf("S %g, A %g; Fit (BOOC) = %g (smaller is better)\n", 
-                                    Subjects[j], Analyses_nos[i], Fit_BOOC_subject[[i]][j]),
-                            sprintf("Posteriors: Om2=%g; Om3=%g, Nu=%g; M2=%g; M3=%g; Phi2=%g; Phi3=%g",
-                                    signif(Om2_vector[[i]][Subjects[j], 2], digits=3), 
-                                    signif(Om3_vector[[i]][Subjects[j], 2], digits=3), 
-                                    
-                                    signif(Nu_vector[[i]][Subjects[j], 2], digits=3),
-                                    
-                                    signif(M2_vector[[i]][Subjects[j], 2], digits=3), 
-                                    signif(M3_vector[[i]][Subjects[j], 2], digits=3), 
-                                    
-                                    signif(Phi2_vector[[i]][Subjects[j], 2], digits=3),
-                                    signif(Phi3_vector[[i]][Subjects[j], 2], digits=3)
-                                    ) ) ) +
-              theme(plot.title = element_text(size = 12)) 
-      
-            )# print()
-    
-    } 
-  }
-        
-} # if(Plot_subj == TRUE)
+# # ------------------------------------------------------
+# # Plot selected subject(s) response trajectory
+# # ------------------------------------------------------
+# # Set the default theme
+# theme_set(theme_grey())
+# 
+# if (Plot_subj == TRUE){
+#         
+# for (i in seq_along(Analyses_nos)){
+#   for (j in seq_along(Subjects)){
+#       
+#     # tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+#       print(ggplot()+
+#               geom_line(data=Predictions_selected[[i]][[j]],
+#                         aes(x=x_axes[[i]]$Index, y=Predictions, colour="Predictions"), 
+#                         size=1.2, alpha = 0.6, colour="red") +
+#               
+#               geom_point(data=Beads_selected[[i]][[j]],
+#                          aes(x=1:nrow(Beads_selected[[i]][[j]]), y=Beads, colour=factor(Beads)),
+#                          size=3, show.legend = FALSE) + 
+#               
+#               geom_point(data=Responses_selected[[i]][[j]], 
+#                          aes(x=1:nrow(Responses_selected[[i]][[j]]), y=Responses),
+#                          size=1.5, show.legend = FALSE) +
+#               
+#               # Plot learning rate for AR1 models     
+#              {if (!(length(Learning_rate) == 0) & Analyses_nos[i] > 10){
+#                geom_line(aes(x=1:nrow(Learning_rate_selected[[i]][[j]]), y=LR, colour="Learning rate"), 
+#                          size=1, colour = "cornflowerblue", data=Learning_rate_selected[[i]][[j]])}}+
+#               
+#               theme(legend.position="bottom")+
+#               
+#               xlab("Bead index")+
+#               ylab("Responses (jar probability estimate)")+
+#               scale_x_continuous(breaks = seq(0, length(x_axes[[i]][[1]]), 1))+
+#               coord_cartesian(ylim=c(0,1))+
+#               scale_y_continuous(breaks = seq(0, 1, 0.1))+
+#               
+#               ggtitle(paste(sprintf("S %g, A %g; Fit (BOOC) = %g (smaller is better)\n", 
+#                                     Subjects[j], Analyses_nos[i], Fit_BOOC_subject[[i]][j]),
+#                             sprintf("Posteriors: Om2=%g; Om3=%g, Nu=%g; M2=%g; M3=%g; Phi2=%g; Phi3=%g",
+#                                     signif(Om2_vector[[i]][Subjects[j], 2], digits=3), 
+#                                     signif(Om3_vector[[i]][Subjects[j], 2], digits=3), 
+#                                     
+#                                     signif(Nu_vector[[i]][Subjects[j], 2], digits=3),
+#                                     
+#                                     signif(M2_vector[[i]][Subjects[j], 2], digits=3), 
+#                                     signif(M3_vector[[i]][Subjects[j], 2], digits=3), 
+#                                     
+#                                     signif(Phi2_vector[[i]][Subjects[j], 2], digits=3),
+#                                     signif(Phi3_vector[[i]][Subjects[j], 2], digits=3)
+#                                     ) ) ) +
+#               theme(plot.title = element_text(size = 12)) 
+#       
+#             )# print()
+#     
+#     } 
+#   }
+#         
+# } # if(Plot_subj == TRUE)
   
 ```
 
@@ -987,31 +1016,38 @@ if (Do_plots == TRUE){
 for (i in seq(Om2_vector)){
   levels(Sa2_vector[[i]]$Group) <- gsub(" ", "\n", levels(Sa2_vector[[i]]$Group)) ### Sa2
   levels(Om2_vector[[i]]$Group) <- gsub(" ", "\n", levels(Om2_vector[[i]]$Group))
-  levels(Om3_vector[[i]]$Group) <- gsub(" ", "\n", levels(Om3_vector[[i]]$Group))
+  # levels(Om3_vector[[i]]$Group) <- gsub(" ", "\n", levels(Om3_vector[[i]]$Group))
   levels(Nu_vector[[i]]$Group) <- gsub(" ", "\n", levels(Nu_vector[[i]]$Group))
   levels(M2_vector[[i]]$Group) <- gsub(" ", "\n", levels(M2_vector[[i]]$Group))
-  levels(M3_vector[[i]]$Group) <- gsub(" ", "\n", levels(M3_vector[[i]]$Group))
+  # levels(M3_vector[[i]]$Group) <- gsub(" ", "\n", levels(M3_vector[[i]]$Group))
   levels(Phi2_vector[[i]]$Group) <- gsub(" ", "\n", levels(Phi2_vector[[i]]$Group))
-  levels(Phi3_vector[[i]]$Group) <- gsub(" ", "\n", levels(Phi3_vector[[i]]$Group))
+  # levels(Phi3_vector[[i]]$Group) <- gsub(" ", "\n", levels(Phi3_vector[[i]]$Group))
 }
   
 Title_size <- 7  
 Base_size <- 7
+Y_limits <- c(-6, 6)
+Y_breaks <- seq(-6, 6, 1)
   
 # Box plot
 for (i in 1:length(Analyses_nos)){
   #tryCatch({x11()}, error = function(e) {quartz()}, warning = function(w){quartz()}) # New window
+  
   Sa2_box <- ggplot(Sa2_vector[[i]], aes(Group, Sa2_vector))+
     geom_boxplot(aes(colour = Group), size = 0.5)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("Sa2")+ 
-    labs(x = "Group", y = "Sa2 posteriors")+ theme_grey(base_size = Base_size)
+    labs(x = "Group", y = "Sa2 posteriors")+ theme_grey(base_size = Base_size)+
+    scale_y_continuous(limits = Y_limits, breaks = Y_breaks)
+  
   Om2_box <- ggplot(Om2_vector[[i]], aes(Group, Om2_vector))+
     geom_boxplot(aes(colour = Group), size = 0.5)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("Om2")+ 
-    labs(x = "Group", y = "Om2 posteriors")+ theme_grey(base_size = Base_size)
+    labs(x = "Group", y = "Om2 posteriors")+ theme_grey(base_size = Base_size) + 
+    scale_y_continuous(limits = Y_limits, breaks = Y_breaks)
     # scale_x_discrete(limits = levels(Group))
+  
   # Om3_box <- ggplot(Om3_vector[[i]], aes(Group, Om3_vector))+
   #   geom_boxplot(aes(colour = Group), size = 0.5)+
   #   theme(plot.title = element_text(size = Title_size))+
@@ -1023,14 +1059,17 @@ for (i in 1:length(Analyses_nos)){
     geom_boxplot(aes(colour = Group), size = 0.5)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("log(Nu)")+
-    labs(x = "Group", y = "Nu posteriors") + theme_grey(base_size = Base_size)
+    labs(x = "Group", y = "Nu posteriors") + theme_grey(base_size = Base_size) +
+    scale_y_continuous(limits = Y_limits, breaks = Y_breaks)
   
   M2_box <- ggplot(M2_vector[[i]], aes(Group, M2_vector))+
     geom_boxplot(aes(colour = Group), size = 0.5)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("M2")+
-    labs(x = "Group", y = "M2 posteriors") + theme_grey(base_size = Base_size)
+    labs(x = "Group", y = "M2 posteriors") + theme_grey(base_size = Base_size) +
+  scale_y_continuous(limits = Y_limits, breaks = Y_breaks)
     # scale_x_discrete(limits = levels(Group))
+  
   # M3_box <- ggplot(M3_vector[[i]], aes(Group, M3_vector))+
   #   geom_boxplot(aes(colour = Group), size = 0.5)+
   #   theme(plot.title = element_text(size = Title_size))+
@@ -1042,7 +1081,9 @@ for (i in 1:length(Analyses_nos)){
     geom_boxplot(aes(colour = Group), size = 0.5)+
     theme(plot.title = element_text(size = Title_size))+
     ggtitle("Phi2")+
-    labs(x = "Group", y = "Phi2 posteriors") + theme_grey(base_size = Base_size)
+    labs(x = "Group", y = "Phi2 posteriors") + theme_grey(base_size = Base_size) +
+    scale_y_continuous(limits = Y_limits, breaks = Y_breaks)
+  
   # Phi3_box <- ggplot(Phi3_vector[[i]], aes(Group, Phi3_vector))+
   #   geom_boxplot(aes(colour = Group), size = 0.5)+
   #   theme(plot.title = element_text(size = Title_size))+
@@ -1079,12 +1120,14 @@ for (i in 1:length(Analyses_nos)){
   Sa2_dens <- ggplot(Sa2_vector[[i]], aes(Sa2_vector))+
     geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(plot.title = element_text(size = Title_size))+
-    ggtitle("Sa2") + theme_grey(base_size = Base_size)
+    ggtitle("Sa2") + theme_grey(base_size = Base_size) +
+    scale_x_continuous(limits = Y_limits, breaks = Y_breaks)
   
   Om2_dens <- ggplot(Om2_vector[[i]], aes(Om2_vector))+
     geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(legend.position="bottom", plot.title = element_text(size = Title_size))+
-    ggtitle("Om2") + theme_grey(base_size = Base_size)
+    ggtitle("Om2") + theme_grey(base_size = Base_size) +
+    scale_x_continuous(limits = Y_limits, breaks = Y_breaks)
 
   # Om3_dens <- ggplot(Om3_vector[[i]], aes(Om3_vector))+
   #   geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
@@ -1094,12 +1137,14 @@ for (i in 1:length(Analyses_nos)){
   Nu_dens <- ggplot(Nu_vector[[i]], aes(Nu_vector))+
     geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(plot.title = element_text(size = Title_size))+
-    ggtitle("log(Nu)") + theme_grey(base_size = Base_size)
+    ggtitle("log(Nu)") + theme_grey(base_size = Base_size) + 
+    scale_x_continuous(limits = Y_limits, breaks = Y_breaks)
   
   M2_dens <- ggplot(M2_vector[[i]], aes(M2_vector))+
     geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(plot.title = element_text(size = Title_size))+
-    ggtitle("M2") + theme_grey(base_size = Base_size)
+    ggtitle("M2") + theme_grey(base_size = Base_size) +
+    scale_x_continuous(limits = Y_limits, breaks = Y_breaks)
   # M3_dens <- ggplot(M3_vector[[i]], aes(M3_vector))+
   #   geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
   #   theme(plot.title = element_text(size = Title_size))+
@@ -1108,7 +1153,9 @@ for (i in 1:length(Analyses_nos)){
   Phi2_dens <- ggplot(Phi2_vector[[i]], aes(Phi2_vector))+
     geom_density(aes(fill = Group), size = Size, alpha=Alpha)+
     theme(plot.title = element_text(size = Title_size))+
-    ggtitle("Phi2") + theme_grey(base_size = Base_size)
+    ggtitle("Phi2") + theme_grey(base_size = Base_size) +
+    scale_x_continuous(limits = Y_limits, breaks = Y_breaks)
+    
   # Phi3_dens <- ggplot(Phi3_vector[[i]], aes(Phi3_vector))+
   #   geom_density(aes(fill = Group, colour = Group), size = 0.5, alpha=0.3)+
   #   theme(plot.title = element_text(size = Title_size))+
